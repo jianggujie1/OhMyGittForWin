@@ -5,48 +5,65 @@
         Height="390" Width="530"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
+        WindowStyle="None"
         Background="{StaticResource NeoBgBrush}">
 
-    <Grid Margin="18">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="56"
+                      ResizeBorderThickness="4"
+                      CornerRadius="0"
+                      GlassFrameThickness="0"
+                      UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
 
-        <!-- Header -->
-        <Border Grid.Row="0" Style="{StaticResource NeoCard}" Padding="16,12" Margin="0,0,0,14">
-            <StackPanel Orientation="Vertical">
-                <TextBlock Text="GITHUB AUTHENTICATION" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11"/>
-                <TextBlock Text="绑定 GitHub 访问令牌 (Personal Access Token)" Foreground="{StaticResource NeoTextPrimary}" FontSize="15" FontWeight="Bold" Margin="0,2,0,0"/>
-            </StackPanel>
-        </Border>
+    <Border BorderBrush="#374151" BorderThickness="1">
+        <Grid Margin="18">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <!-- Content Card -->
-        <Border Grid.Row="1" Style="{StaticResource NeoCard}" Padding="16" Margin="0,0,0,14">
-            <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="💡 GitHub 已于 2021 年停用账号密码推送，必须使用 Token 认证。" 
-                           Foreground="{StaticResource NeoTextSecondary}" FontSize="12" Margin="0,0,0,8"/>
-                
-                <Button Content="🌐 一键打开 GitHub Token 生成页 (已预选 repo 权限)" 
-                        Click="BtnOpenGitHubToken_Click"
-                        Style="{StaticResource NeoButton}" Foreground="#61AFEF" Padding="12,6" Margin="0,0,0,14" HorizontalAlignment="Left"/>
+            <!-- Header -->
+            <Border Grid.Row="0" Style="{StaticResource NeoCard}" Padding="16,12" Margin="0,0,0,14">
+                <DockPanel LastChildFill="True">
+                    <Button Content="✕" Click="BtnCancel_Click" DockPanel.Dock="Right" 
+                            WindowChrome.IsHitTestVisibleInChrome="True"
+                            Style="{StaticResource NeoButton}" Width="30" Height="30" Padding="0" 
+                            Foreground="{StaticResource NeoTextMuted}" VerticalAlignment="Center" ToolTip="关闭"/>
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="GITHUB AUTHENTICATION" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11"/>
+                        <TextBlock Text="绑定 GitHub 访问令牌 (Personal Access Token)" Foreground="{StaticResource NeoTextPrimary}" FontSize="15" FontWeight="Bold" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
 
-                <TextBlock Text="粘贴你的 Personal Access Token (以 ghp_ 开头):" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" Margin="0,0,0,6"/>
-                <TextBox x:Name="TxtToken" Style="{StaticResource NeoTextBox}" Height="38" Padding="10,8" Margin="0,0,0,4"
-                         ToolTip="例如 ghp_xxxxxxxxxxxxxxxxxxxx"/>
-            </StackPanel>
-        </Border>
+            <!-- Content Card -->
+            <Border Grid.Row="1" Style="{StaticResource NeoCard}" Padding="16" Margin="0,0,0,14">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="💡 GitHub 已于 2021 年停用账号密码推送，必须使用 Token 认证。" 
+                               Foreground="{StaticResource NeoTextSecondary}" FontSize="12" Margin="0,0,0,8"/>
+                    
+                    <Button Content="🌐 一键打开 GitHub Token 生成页 (已预选 repo 权限)" 
+                            Click="BtnOpenGitHubToken_Click"
+                            Style="{StaticResource NeoButton}" Foreground="#61AFEF" Padding="12,6" Margin="0,0,0,14" HorizontalAlignment="Left"/>
 
-        <!-- Bottom Actions -->
-        <Border Grid.Row="2" Style="{StaticResource NeoSunkenCard}" Padding="12,8">
-            <DockPanel LastChildFill="True">
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                    <Button Content="取消" Click="BtnCancel_Click" Style="{StaticResource NeoButton}" Padding="16,6" Margin="0,0,10,0"/>
-                    <Button Content="确定绑定" Click="BtnOk_Click" Style="{StaticResource NeoPrimaryButton}" Padding="18,6"/>
+                    <TextBlock Text="粘贴你的 Personal Access Token (以 ghp_ 开头):" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" Margin="0,0,0,6"/>
+                    <TextBox x:Name="TxtToken" Style="{StaticResource NeoTextBox}" Height="38" Padding="10,8" Margin="0,0,0,4"
+                             ToolTip="例如 ghp_xxxxxxxxxxxxxxxxxxxx"/>
                 </StackPanel>
-                <TextBlock Text="绑定后将自动写入当前远程源地址" Foreground="{StaticResource NeoTextMuted}" FontSize="12" VerticalAlignment="Center"/>
-            </DockPanel>
-        </Border>
-    </Grid>
+            </Border>
+
+            <!-- Bottom Actions -->
+            <Border Grid.Row="2" Style="{StaticResource NeoSunkenCard}" Padding="12,8">
+                <DockPanel LastChildFill="True">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                        <Button Content="取消" Click="BtnCancel_Click" Style="{StaticResource NeoButton}" Padding="16,6" Margin="0,0,10,0"/>
+                        <Button Content="确定绑定" Click="BtnOk_Click" Style="{StaticResource NeoPrimaryButton}" Padding="18,6"/>
+                    </StackPanel>
+                    <TextBlock Text="绑定后将自动写入当前远程源地址" Foreground="{StaticResource NeoTextMuted}" FontSize="12" VerticalAlignment="Center"/>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Border>
 </Window>

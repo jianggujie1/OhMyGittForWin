@@ -10,7 +10,16 @@
         Title="OhMyGit - Neomorphic Edition" 
         Height="860" Width="1380"
         WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
         Background="{StaticResource NeoBgBrush}">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="38"
+                      ResizeBorderThickness="6"
+                      CornerRadius="0"
+                      GlassFrameThickness="0"
+                      UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
 
     <Window.DataContext>
         <vm:MainViewModel />
@@ -21,12 +30,123 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
 
-    <Grid Margin="16">
+    <Grid x:Name="RootContainer" Background="{StaticResource NeoBgBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
+            <!-- 0. Dark Neomorphic Title Bar -->
+            <RowDefinition Height="38"/>
+            <!-- 1. Workspace Content -->
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+
+        <!-- 0. Integrated Custom Dark Title Bar -->
+        <Border Grid.Row="0" Background="#16181F" BorderBrush="#252A36" BorderThickness="0,0,0,1">
+            <Grid>
+                <!-- Left: App Brand & Window Info -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
+                    <Border Background="{StaticResource NeoOrangeGradient}" CornerRadius="6" Width="20" Height="20" Margin="0,0,8,0">
+                        <TextBlock Text="Ω" Foreground="White" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="OhMyGit" Foreground="{StaticResource NeoTextPrimary}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="|" Foreground="#3E4452" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="📁 " FontSize="11" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding RepoName}" Foreground="{StaticResource NeoTextSecondary}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="•" Foreground="#4B5563" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <Ellipse Width="6" Height="6" Fill="#10B981" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding CurrentBranch}" Foreground="#10B981" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Center: Window Caption (Centered, Non-interactive so dragging works anywhere) -->
+                <TextBlock Text="OhMyGit - Neomorphic Git Engine" Foreground="#475569" FontSize="11" 
+                           HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
+
+                <!-- Right: Custom Window Control Buttons -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Stretch"
+                            WindowChrome.IsHitTestVisibleInChrome="True">
+                    <!-- Minimize -->
+                    <Button x:Name="BtnMinimize" Click="BtnMinimize_Click" Width="44" Height="38" 
+                            Background="Transparent" BorderThickness="0" Foreground="{StaticResource NeoTextMuted}"
+                            FontSize="13" Content="─" ToolTip="最小化">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="bd" Background="{TemplateBinding Background}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bd" Property="Background" Value="#252A36"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <!-- Maximize / Restore -->
+                    <Button x:Name="BtnMaximize" Click="BtnMaximize_Click" Width="44" Height="38" 
+                            Background="Transparent" BorderThickness="0" Foreground="{StaticResource NeoTextMuted}"
+                            FontSize="12" Content="□" ToolTip="最大化 / 还原">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="bd" Background="{TemplateBinding Background}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bd" Property="Background" Value="#252A36"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <!-- Close -->
+                    <Button x:Name="BtnClose" Click="BtnClose_Click" Width="48" Height="38" 
+                            Background="Transparent" BorderThickness="0" Foreground="{StaticResource NeoTextMuted}"
+                            FontSize="13" Content="✕" ToolTip="关闭">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="bd" Background="{TemplateBinding Background}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bd" Property="Background" Value="#E11D48"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 1. Workspace Content -->
+        <Grid Grid.Row="1" Margin="16,12,16,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
         <!-- TOP BAR: Floating Neomorphic Header Island -->
         <Border Grid.Row="0" Style="{StaticResource NeoCard}" Padding="16,12" Margin="0,0,0,16">
@@ -452,4 +572,5 @@
             </DockPanel>
         </Border>
     </Grid>
+</Grid>
 </Window>

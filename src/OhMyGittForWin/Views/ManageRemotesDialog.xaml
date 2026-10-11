@@ -7,8 +7,18 @@
         Title="Git 远程仓库与分支管理 - OhMyGittForWin"
         Height="620" Width="740"
         WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
         Background="{StaticResource NeoBgBrush}">
 
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="56"
+                      ResizeBorderThickness="4"
+                      CornerRadius="0"
+                      GlassFrameThickness="0"
+                      UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Border BorderBrush="#374151" BorderThickness="1">
     <Grid Margin="18">
         <Grid.RowDefinitions>
             <!-- 0. Header -->
@@ -24,6 +34,10 @@
         <!-- 0. Header Card -->
         <Border Grid.Row="0" Style="{StaticResource NeoCard}" Padding="16,12" Margin="0,0,0,14">
             <DockPanel LastChildFill="True">
+                <Button Content="✕" Click="BtnClose_Click" DockPanel.Dock="Right" 
+                        WindowChrome.IsHitTestVisibleInChrome="True"
+                        Style="{StaticResource NeoButton}" Width="30" Height="30" Padding="0" 
+                        Foreground="{StaticResource NeoTextMuted}" VerticalAlignment="Center" ToolTip="关闭"/>
                 <StackPanel Orientation="Vertical">
                     <TextBlock Text="REMOTE REPOSITORIES &amp; BRANCHES" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11"/>
                     <TextBlock Text="远程仓库管理与分支推送" Foreground="{StaticResource NeoTextPrimary}" FontSize="15" FontWeight="Bold" Margin="0,2,0,0"/>
@@ -167,4 +181,5 @@
             </DockPanel>
         </Border>
     </Grid>
+    </Border>
 </Window>

@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         Loaded += MainWindow_Loaded;
+        StateChanged += MainWindow_StateChanged;
     }
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -68,6 +69,43 @@ public partial class MainWindow : Window
             {
                 ViewModel.CheckoutBranchCommand.Execute(branch);
             }
+        }
+    }
+
+    private void MainWindow_StateChanged(object? sender, System.EventArgs e)
+    {
+        UpdateMaximizeButton();
+        if (WindowState == WindowState.Maximized)
+        {
+            RootContainer.Margin = new Thickness(7);
+        }
+        else
+        {
+            RootContainer.Margin = new Thickness(0);
+        }
+    }
+
+    private void BtnMinimize_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void BtnMaximize_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        UpdateMaximizeButton();
+    }
+
+    private void BtnClose_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
+    private void UpdateMaximizeButton()
+    {
+        if (BtnMaximize != null)
+        {
+            BtnMaximize.Content = WindowState == WindowState.Maximized ? "❐" : "□";
         }
     }
 }

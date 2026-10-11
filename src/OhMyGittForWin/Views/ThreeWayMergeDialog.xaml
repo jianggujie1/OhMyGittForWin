@@ -8,12 +8,22 @@
         Title="3-Way Merge 冲突解决器 - Neomorphic Edition" 
         Height="760" Width="1180"
         WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
         Background="{StaticResource NeoBgBrush}">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="56"
+                      ResizeBorderThickness="5"
+                      CornerRadius="0"
+                      GlassFrameThickness="0"
+                      UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
 
     <Window.DataContext>
         <vm:ThreeWayMergeViewModel />
     </Window.DataContext>
 
+    <Border BorderBrush="#374151" BorderThickness="1">
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -32,7 +42,11 @@
                     <Button Content="💾 保存并解决 (APPLY)" 
                             Command="{Binding SaveAndCloseCommand}"
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
-                            Style="{StaticResource NeoPrimaryButton}"/>
+                            Style="{StaticResource NeoPrimaryButton}" Margin="0,0,10,0"/>
+                    <Button Content="✕" Click="CloseButton_Click" 
+                            WindowChrome.IsHitTestVisibleInChrome="True"
+                            Style="{StaticResource NeoButton}" Width="32" Height="32" Padding="0" 
+                            Foreground="{StaticResource NeoTextMuted}" ToolTip="关闭"/>
                 </StackPanel>
                 <StackPanel Orientation="Vertical">
                     <TextBlock Text="3-WAY CONFLICT RESOLVER" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11"/>
@@ -163,4 +177,5 @@
             </StackPanel>
         </Border>
     </Grid>
+    </Border>
 </Window>
