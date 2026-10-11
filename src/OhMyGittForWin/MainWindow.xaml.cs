@@ -43,4 +43,18 @@ public partial class MainWindow : Window
             _ = ViewModel.RefreshRepositoryAsync();
         }
     }
+
+    private void TabLog_Click(object sender, RoutedEventArgs e)
+    {
+        LogContentPanel.Visibility = Visibility.Visible;
+        CommitContentPanel.Visibility = Visibility.Collapsed;
+        ViewModel.SelectedTabIndex = 0;
+    }
+
+    private void TabCommit_Click(object sender, RoutedEventArgs e)
+    {
+        LogContentPanel.Visibility = Visibility.Collapsed;
+        CommitContentPanel.Visibility = Visibility.Visible;
+        ViewModel.SelectedTabIndex = 1;
+    }
 }

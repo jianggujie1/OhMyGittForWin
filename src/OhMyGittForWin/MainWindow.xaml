@@ -6,10 +6,10 @@
         xmlns:conv="clr-namespace:OhMyGittForWin.Converters"
         xmlns:vm="clr-namespace:OhMyGittForWin.ViewModels"
         mc:Ignorable="d"
-        Title="OhMyGit for Windows - 原生原生极速 Git 客户端" 
-        Height="800" Width="1300"
+        Title="OhMyGit - Neomorphic Edition" 
+        Height="860" Width="1380"
         WindowStartupLocation="CenterScreen"
-        Background="#181818">
+        Background="{StaticResource NeoBgBrush}">
 
     <Window.DataContext>
         <vm:MainViewModel />
@@ -20,219 +20,322 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
 
-    <Grid>
+    <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="26"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Top Navigation & Toolbar (IDEA Style) -->
-        <Border Grid.Row="0" Background="#222222" BorderBrush="#2F2F2F" BorderThickness="0,0,0,1" Padding="12,8">
+        <!-- TOP BAR: Floating Neomorphic Header Island -->
+        <Border Grid.Row="0" Style="{StaticResource NeoCard}" Padding="16,12" Margin="0,0,0,16">
             <DockPanel LastChildFill="True">
                 <!-- Action Buttons on Right -->
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
                     <Button Content="📂 打开仓库" Command="{Binding OpenRepositoryCommand}"
-                            Background="#2D2D2D" Foreground="#E0E0E0" BorderBrush="#3F3F3F" Padding="10,5" Margin="4,0" FontWeight="SemiBold"/>
+                            Style="{StaticResource NeoButton}" Margin="0,0,10,0"/>
                     <Button Content="🔄 刷新" Command="{Binding RefreshRepositoryCommand}"
-                            Background="#2D2D2D" Foreground="#E0E0E0" BorderBrush="#3F3F3F" Padding="10,5" Margin="4,0"/>
+                            Style="{StaticResource NeoButton}" Margin="0,0,12,0"/>
                     <Button Content="⚡ 3-Way 冲突解决器" Click="OpenConflictResolver_Click"
-                            Background="#1A4971" Foreground="#9CDCFE" BorderBrush="#264F78" Padding="10,5" Margin="8,0,0,0" FontWeight="SemiBold"/>
+                            Style="{StaticResource NeoAccentBlueButton}"/>
                 </StackPanel>
 
-                <!-- Left App & Repo Info -->
+                <!-- Brand & Status Pill on Left -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Background="#3574F0" CornerRadius="4" Padding="6,2" Margin="0,0,10,0">
-                        <TextBlock Text="Git" Foreground="White" FontWeight="Bold" FontSize="13"/>
+                    <!-- Brand Icon with Warm Orange Glow -->
+                    <Border Background="{StaticResource NeoOrangeGradient}" CornerRadius="12" Width="36" Height="36" 
+                            Effect="{StaticResource NeoGlowOrange}" Margin="0,0,12,0">
+                        <TextBlock Text="Ω" Foreground="White" FontWeight="Bold" FontSize="18" 
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-                    <TextBlock Text="OhMyGit" Foreground="#E0E0E0" FontWeight="Bold" FontSize="15" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                    
+                    <StackPanel Orientation="Vertical" Margin="0,0,24,0" VerticalAlignment="Center">
+                        <TextBlock Text="OhMyGit" Foreground="{StaticResource NeoTextPrimary}" FontWeight="Bold" FontSize="16"/>
+                        <TextBlock Text="Neomorphic Git Engine" Foreground="{StaticResource NeoTextMuted}" FontSize="11"/>
+                    </StackPanel>
 
-                    <Border Background="#2B2B2B" CornerRadius="4" Padding="10,4" Margin="0,0,8,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="当前仓库: " Foreground="#888888" FontSize="12"/>
-                            <TextBlock Text="{Binding RepoName}" Foreground="#4EC9B0" FontWeight="Bold" FontSize="12"/>
+                    <!-- Repo Pill -->
+                    <Border Style="{StaticResource NeoSunkenCard}" Padding="12,6" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="📁 " FontSize="12"/>
+                            <TextBlock Text="{Binding RepoName}" Foreground="{StaticResource NeoTextPrimary}" FontWeight="SemiBold" FontSize="12"/>
                         </StackPanel>
                     </Border>
 
-                    <Border Background="#2B2B2B" CornerRadius="4" Padding="10,4">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="🌿 " FontSize="12"/>
-                            <TextBlock Text="{Binding CurrentBranch}" Foreground="#CE9178" FontWeight="SemiBold" FontSize="12"/>
+                    <!-- Branch Pill with Neon Green Indicator -->
+                    <Border Style="{StaticResource NeoSunkenCard}" Padding="12,6">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="7" Height="7" Fill="#10B981" Margin="0,0,7,0">
+                                <Ellipse.Effect>
+                                    <DropShadowEffect Color="#10B981" BlurRadius="8" ShadowDepth="0" Opacity="0.8"/>
+                                </Ellipse.Effect>
+                            </Ellipse>
+                            <TextBlock Text="{Binding CurrentBranch}" Foreground="#10B981" FontWeight="Bold" FontSize="12"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
             </DockPanel>
         </Border>
 
-        <!-- Main Workspace -->
+        <!-- MAIN WORKSPACE -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="260" MinWidth="180" MaxWidth="400"/>
-                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="280" MinWidth="200" MaxWidth="420"/>
+                <ColumnDefinition Width="14"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Left Panel: Branches (IDEA Tool Window style) -->
-            <Border Grid.Column="0" Background="#1E1E1E" BorderBrush="#2B2B2B" BorderThickness="0,0,1,0">
+            <!-- LEFT PANEL: Branches Card -->
+            <Border Grid.Column="0" Style="{StaticResource NeoCard}" Padding="14">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0" Background="#252526" Padding="10,6">
-                        <TextBlock Text="分支列表 (Branches)" Foreground="#B0B0B0" FontWeight="SemiBold" FontSize="12"/>
-                    </Border>
+                    <DockPanel Grid.Row="0" Margin="0,0,0,12">
+                        <TextBlock Text="BRANCHES" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Branches.Count, StringFormat='({0})'}" Foreground="{StaticResource NeoTextMuted}" FontSize="11" 
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    </DockPanel>
 
-                    <ListBox Grid.Row="1" ItemsSource="{Binding Branches}" 
-                             Background="Transparent" BorderThickness="0" Padding="4">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Border Padding="6,4" Margin="0,1" CornerRadius="4">
+                    <Border Grid.Row="1" Style="{StaticResource NeoSunkenCard}" Padding="6">
+                        <ListBox ItemsSource="{Binding Branches}" Background="Transparent" BorderThickness="0">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="itemBorder" CornerRadius="8" Padding="10,7" Margin="0,2" Background="Transparent">
+                                                    <ContentPresenter/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="itemBorder" Property="Background" Value="#252A36"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="itemBorder" Property="Background" Value="#2B3241"/>
+                                                        <Setter TargetName="itemBorder" Property="BorderBrush" Value="#4B5563"/>
+                                                        <Setter TargetName="itemBorder" Property="BorderThickness" Value="1"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
                                     <DockPanel LastChildFill="True">
-                                        <TextBlock Text="⭐" DockPanel.Dock="Left" Margin="0,0,6,0" 
-                                                   Visibility="{Binding IsCurrentHead, Converter={StaticResource BoolToVis}}"/>
-                                        <TextBlock Text="☁ " DockPanel.Dock="Left" Foreground="#6A9955"
-                                                   Visibility="{Binding IsRemote, Converter={StaticResource BoolToVis}}"/>
-                                        <TextBlock Text="{Binding FriendlyName}" Foreground="#D4D4D4" FontWeight="Normal"/>
+                                        <Ellipse Width="6" Height="6" Fill="#FF7700" Margin="0,0,8,0" DockPanel.Dock="Left"
+                                                 VerticalAlignment="Center" Visibility="{Binding IsCurrentHead, Converter={StaticResource BoolToVis}}">
+                                            <Ellipse.Effect>
+                                                <DropShadowEffect Color="#FF7700" BlurRadius="6" ShadowDepth="0"/>
+                                            </Ellipse.Effect>
+                                        </Ellipse>
+                                        <TextBlock Text="☁ " DockPanel.Dock="Left" Foreground="#60A5FA" FontSize="11"
+                                                   Visibility="{Binding IsRemote, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding FriendlyName}" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
                                     </DockPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
                 </Grid>
             </Border>
 
-            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="#2B2B2B"/>
+            <!-- RIGHT PANEL: Work Area Card with Segmented Switch -->
+            <Border Grid.Column="2" Style="{StaticResource NeoCard}" Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-            <!-- Center Content Area: Tabs for [Log] and [Commit] -->
-            <TabControl Grid.Column="2" Background="Transparent" BorderThickness="0" SelectedIndex="{Binding SelectedTabIndex}">
-                <TabControl.Resources>
-                    <Style TargetType="TabItem">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="TabItem">
-                                    <Border Name="Border" Background="#252526" BorderBrush="#2B2B2B" BorderThickness="0,0,1,1" Padding="16,8">
-                                        <ContentPresenter ContentSource="Header" TextElement.Foreground="#B0B0B0" TextElement.FontWeight="SemiBold"/>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Border" Property="Background" Value="#1E1E1E"/>
-                                            <Setter TargetName="Border" Property="BorderThickness" Value="0,2,0,0"/>
-                                            <Setter TargetName="Border" Property="BorderBrush" Value="#3574F0"/>
-                                            <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </TabControl.Resources>
+                    <!-- Segmented Pill Switch (Neomorphic Slider Tab Header) -->
+                    <Border Grid.Row="0" Style="{StaticResource NeoSunkenCard}" HorizontalAlignment="Left" Padding="4" Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal">
+                            <!-- Tab 0: Log -->
+                            <RadioButton Content="📜 Git Log (提交历史树)" GroupName="MainTabs" IsChecked="True"
+                                         Click="TabLog_Click" Cursor="Hand" Margin="2,0">
+                                <RadioButton.Style>
+                                    <Style TargetType="RadioButton">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="RadioButton">
+                                                    <Border x:Name="tabBorder" CornerRadius="10" Padding="16,8" Background="Transparent">
+                                                        <ContentPresenter TextElement.FontWeight="Bold" TextElement.FontSize="12"
+                                                                          TextElement.Foreground="{StaticResource NeoTextSecondary}"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource NeoSurfaceGradient}"/>
+                                                            <Setter TargetName="tabBorder" Property="BorderBrush" Value="{StaticResource NeoRaisedBorderBrush}"/>
+                                                            <Setter TargetName="tabBorder" Property="BorderThickness" Value="1"/>
+                                                            <Setter TargetName="tabBorder" Property="Effect" Value="{StaticResource NeoButtonShadow}"/>
+                                                            <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </RadioButton.Style>
+                            </RadioButton>
 
-                <!-- TAB 1: Log (IDEA Git Log Viewer) -->
-                <TabItem Header="📜 Git Log (提交树)">
-                    <Grid Background="#1E1E1E">
+                            <!-- Tab 1: Commit -->
+                            <RadioButton Content="✍️ Commit (变更与暂存)" GroupName="MainTabs"
+                                         Click="TabCommit_Click" Cursor="Hand" Margin="2,0">
+                                <RadioButton.Style>
+                                    <Style TargetType="RadioButton">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="RadioButton">
+                                                    <Border x:Name="tabBorder" CornerRadius="10" Padding="16,8" Background="Transparent">
+                                                        <ContentPresenter TextElement.FontWeight="Bold" TextElement.FontSize="12"
+                                                                          TextElement.Foreground="{StaticResource NeoTextSecondary}"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource NeoSurfaceGradient}"/>
+                                                            <Setter TargetName="tabBorder" Property="BorderBrush" Value="{StaticResource NeoRaisedBorderBrush}"/>
+                                                            <Setter TargetName="tabBorder" Property="BorderThickness" Value="1"/>
+                                                            <Setter TargetName="tabBorder" Property="Effect" Value="{StaticResource NeoButtonShadow}"/>
+                                                            <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </RadioButton.Style>
+                            </RadioButton>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Tab Content 0: Git Log -->
+                    <Grid Grid.Row="1" x:Name="LogContentPanel" Visibility="Visible">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
-                            <RowDefinition Height="4"/>
-                            <RowDefinition Height="260" MinHeight="150"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="260" MinHeight="140"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Filter Bar -->
-                        <Border Grid.Row="0" Background="#252526" Padding="8,6" BorderBrush="#2B2B2B" BorderThickness="0,0,0,1">
-                            <DockPanel>
-                                <TextBlock Text="🔍 搜索: " Foreground="#888888" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                <TextBox Text="{Binding FilterKeyword, UpdateSourceTrigger=PropertyChanged}" 
-                                         Background="#1E1E1E" Foreground="White" BorderBrush="#3E3E42" Padding="6,3" FontSize="12"/>
-                            </DockPanel>
+                        <!-- Search Box (Sunken Neomorphic capsule) -->
+                        <Border Grid.Row="0" Margin="0,0,0,12">
+                            <TextBox Text="{Binding FilterKeyword, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource NeoTextBox}" Height="40" Padding="12,10"
+                                     ToolTip="搜索提交信息、作者或哈希"/>
                         </Border>
 
-                        <!-- Commits DataGrid -->
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding FilteredCommits}" SelectedItem="{Binding SelectedCommit}"
-                                  AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
-                                  Background="#1E1E1E" Foreground="#D4D4D4" RowBackground="#1E1E1E" AlternatingRowBackground="#252526"
-                                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#2B2B2B" BorderThickness="0">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Hash" Binding="{Binding ShortSha}" Width="80" FontWeight="SemiBold" Foreground="#3574F0"/>
-                                <DataGridTemplateColumn Header="分支 / 标签" Width="140">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <ItemsControl ItemsSource="{Binding BranchesAndTags}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Border Background="#264F78" CornerRadius="3" Padding="4,1" Margin="2,0">
-                                                            <TextBlock Text="{Binding}" Foreground="#9CDCFE" FontSize="11"/>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <StackPanel Orientation="Horizontal"/>
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                            </ItemsControl>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="提交信息 (Commit Message)" Binding="{Binding MessageShort}" Width="*" FontWeight="Medium"/>
-                                <DataGridTextColumn Header="作者" Binding="{Binding AuthorName}" Width="120" Foreground="#858585"/>
-                                <DataGridTextColumn Header="日期" Binding="{Binding FormattedDate}" Width="140" Foreground="#858585"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
+                        <!-- Commits Table (Sunken container with rounded rows) -->
+                        <Border Grid.Row="1" Style="{StaticResource NeoSunkenCard}" Padding="6">
+                            <DataGrid ItemsSource="{Binding FilteredCommits}" SelectedItem="{Binding SelectedCommit}"
+                                      AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
+                                      Background="Transparent" Foreground="{StaticResource NeoTextPrimary}" 
+                                      RowBackground="Transparent" AlternatingRowBackground="#1A1C23"
+                                      GridLinesVisibility="None" BorderThickness="0"
+                                      HeadersVisibility="Column">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="{StaticResource NeoTextMuted}"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="FontSize" Value="11"/>
+                                        <Setter Property="Padding" Value="10,6"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                        <Setter Property="BorderBrush" Value="#2A2F3D"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="Margin" Value="0,1"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#252A36"/>
+                                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.RowStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="HASH" Binding="{Binding ShortSha}" Width="90" FontWeight="Bold" Foreground="#38BDF8"/>
+                                    <DataGridTemplateColumn Header="REFS" Width="130">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ItemsControl ItemsSource="{Binding BranchesAndTags}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border Background="#1E293B" CornerRadius="6" Padding="6,2" Margin="2,0"
+                                                                    BorderBrush="#3B82F6" BorderThickness="0.8">
+                                                                <TextBlock Text="{Binding}" Foreground="#93C5FD" FontSize="10" FontWeight="SemiBold"/>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel Orientation="Horizontal"/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                </ItemsControl>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="COMMIT MESSAGE" Binding="{Binding MessageShort}" Width="*" FontWeight="Medium"/>
+                                    <DataGridTextColumn Header="AUTHOR" Binding="{Binding AuthorName}" Width="120" Foreground="{StaticResource NeoTextSecondary}"/>
+                                    <DataGridTextColumn Header="DATE" Binding="{Binding FormattedDate}" Width="130" Foreground="{StaticResource NeoTextMuted}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
 
-                        <GridSplitter Grid.Row="2" Height="4" HorizontalAlignment="Stretch" Background="#2B2B2B"/>
+                        <GridSplitter Grid.Row="2" Height="6" HorizontalAlignment="Stretch" Background="Transparent"/>
 
-                        <!-- Commit Detail Split (Files on Left, Diff on Right) -->
-                        <Grid Grid.Row="3" Background="#181818">
+                        <!-- Commit Detail Split -->
+                        <Grid Grid.Row="3">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="280" MinWidth="150"/>
-                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="280" MinWidth="160"/>
+                                <ColumnDefinition Width="12"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Commit changed files -->
-                            <Border Grid.Column="0" Background="#1E1E1E" BorderBrush="#2B2B2B" BorderThickness="0,0,1,0">
+                            <!-- Changed Files -->
+                            <Border Grid.Column="0" Style="{StaticResource NeoSunkenCard}" Padding="8">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
-                                    <Border Grid.Row="0" Background="#252526" Padding="8,5">
-                                        <TextBlock Text="变更文件列表" Foreground="#888888" FontSize="11" FontWeight="SemiBold"/>
-                                    </Border>
+                                    <TextBlock Grid.Row="0" Text="CHANGED FILES" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" Margin="4,2,0,8"/>
                                     <ListBox Grid.Row="1" ItemsSource="{Binding CommitFiles}" SelectedItem="{Binding SelectedCommitFile}"
-                                             Background="Transparent" BorderThickness="0" Padding="2">
+                                             Background="Transparent" BorderThickness="0">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding}" Foreground="#D4D4D4" Padding="4,2"/>
+                                                <TextBlock Text="{Binding}" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" Padding="4,2"/>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                     </ListBox>
                                 </Grid>
                             </Border>
 
-                            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="#2B2B2B"/>
+                            <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Background="Transparent"/>
 
                             <!-- Diff Viewer -->
-                            <Border Grid.Column="2" Background="#1E1E1E">
+                            <Border Grid.Column="2" Style="{StaticResource NeoSunkenCard}" Padding="10">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
-                                    <Border Grid.Row="0" Background="#252526" Padding="10,6">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="Diff 预览: " Foreground="#888888" FontSize="11"/>
-                                            <TextBlock Text="{Binding SelectedCommitFile}" Foreground="#ECECEC" FontWeight="SemiBold" FontSize="11"/>
-                                        </StackPanel>
-                                    </Border>
+                                    <TextBlock Grid.Row="0" Text="{Binding SelectedCommitFile, StringFormat='DIFF: {0}'}" 
+                                               Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" Margin="2,0,0,6"/>
                                     <ListBox Grid.Row="1" ItemsSource="{Binding CurrentDiff.Lines}"
-                                             Background="#181818" BorderThickness="0"
-                                             FontFamily="Consolas, Cascadia Code, Courier New" FontSize="12">
+                                             Background="Transparent" BorderThickness="0"
+                                             FontFamily="Cascadia Code, Consolas, Courier New" FontSize="12">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <Border Background="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=Background}" Padding="4,1">
+                                                <Border Background="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=Background}" 
+                                                        CornerRadius="4" Padding="6,2" Margin="0,1">
                                                     <TextBlock Text="{Binding Text}" 
                                                                Foreground="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=Foreground}"/>
                                                 </Border>
@@ -243,100 +346,97 @@
                             </Border>
                         </Grid>
                     </Grid>
-                </TabItem>
 
-                <!-- TAB 2: Commit (IDEA Commit Tool Window) -->
-                <TabItem Header="✍️ Commit (变更与提交)">
-                    <Grid Background="#1E1E1E">
+                    <!-- Tab Content 1: Commit Window -->
+                    <Grid Grid.Row="1" x:Name="CommitContentPanel" Visibility="Collapsed">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="340" MinWidth="240"/>
-                            <ColumnDefinition Width="4"/>
+                            <ColumnDefinition Width="380" MinWidth="260"/>
+                            <ColumnDefinition Width="14"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Left: Changes list & Commit message -->
-                        <Grid Grid.Column="0" Background="#1E1E1E">
+                        <!-- Left: File list & Commit Box -->
+                        <Grid Grid.Column="0">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="140"/>
+                                <RowDefinition Height="12"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <Border Grid.Row="0" Background="#252526" Padding="10,6">
-                                <DockPanel LastChildFill="True">
-                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                                        <Button Content="暂存全部" Command="{Binding StageAllCommand}" Padding="6,2" FontSize="11" Margin="2,0" Background="#2D2D2D" Foreground="#D4D4D4"/>
-                                        <Button Content="取消全部" Command="{Binding UnstageAllCommand}" Padding="6,2" FontSize="11" Margin="2,0" Background="#2D2D2D" Foreground="#D4D4D4"/>
-                                    </StackPanel>
-                                    <TextBlock Text="变更列表 (Changes)" Foreground="#B0B0B0" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                </DockPanel>
-                            </Border>
+                            <!-- Changed Files -->
+                            <Border Grid.Row="0" Style="{StaticResource NeoSunkenCard}" Padding="10">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                            <Button Content="暂存全部" Command="{Binding StageAllCommand}" Style="{StaticResource NeoButton}" Padding="8,4" FontSize="11" Margin="0,0,6,0"/>
+                                            <Button Content="取消全部" Command="{Binding UnstageAllCommand}" Style="{StaticResource NeoButton}" Padding="8,4" FontSize="11"/>
+                                        </StackPanel>
+                                        <TextBlock Text="CHANGES" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                    </DockPanel>
 
-                            <!-- Changed files list with checkboxes -->
-                            <ListBox Grid.Row="1" ItemsSource="{Binding StatusFiles}" SelectedItem="{Binding SelectedStatusFile}"
-                                     Background="Transparent" BorderThickness="0" Padding="4">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Padding="4,3" Margin="0,1" CornerRadius="3">
-                                            <DockPanel LastChildFill="True">
-                                                <CheckBox IsChecked="{Binding IsChecked}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                <Border Background="#2B2B2B" CornerRadius="3" Padding="4,1" Margin="0,0,6,0">
-                                                    <TextBlock Text="{Binding StatusBadge}" FontWeight="Bold" FontSize="11" Foreground="#4EC9B0"/>
+                                    <ListBox Grid.Row="1" ItemsSource="{Binding StatusFiles}" SelectedItem="{Binding SelectedStatusFile}"
+                                             Background="Transparent" BorderThickness="0">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Padding="4,3" Margin="0,1" CornerRadius="6">
+                                                    <DockPanel LastChildFill="True">
+                                                        <CheckBox IsChecked="{Binding IsChecked}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                        <Border Background="#252A36" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                                            <TextBlock Text="{Binding StatusBadge}" FontWeight="Bold" FontSize="11" Foreground="#38BDF8"/>
+                                                        </Border>
+                                                        <TextBlock Text="{Binding FilePath}" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" VerticalAlignment="Center"/>
+                                                    </DockPanel>
                                                 </Border>
-                                                <TextBlock Text="{Binding FilePath}" Foreground="#D4D4D4" VerticalAlignment="Center"/>
-                                            </DockPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-
-                            <Border Grid.Row="2" Background="#252526" Padding="8,4" BorderBrush="#2B2B2B" BorderThickness="0,1,0,0">
-                                <TextBlock Text="提交信息 (Commit Message)" Foreground="#888888" FontSize="11" FontWeight="SemiBold"/>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Grid>
                             </Border>
 
-                            <!-- Commit Message editor -->
-                            <TextBox Grid.Row="3" Text="{Binding CommitMessage, UpdateSourceTrigger=PropertyChanged}"
-                                     AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap"
-                                     Background="#181818" Foreground="#D4D4D4" BorderBrush="#2B2B2B" Padding="8" FontSize="12"/>
-
-                            <!-- Commit Action Button -->
-                            <Border Grid.Row="4" Background="#222222" Padding="8">
-                                <Button Content="🚀 Commit 提交修改" Command="{Binding CommitChangesCommand}"
-                                        Background="#107C41" Foreground="White" FontWeight="Bold" Padding="0,8" HorizontalAlignment="Stretch"/>
+                            <!-- Commit Message Box & Glowing Orange Commit Button -->
+                            <Border Grid.Row="2" Style="{StaticResource NeoCard}" Padding="14">
+                                <StackPanel Orientation="Vertical">
+                                    <TextBlock Text="COMMIT MESSAGE" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" Margin="0,0,0,8"/>
+                                    <TextBox Text="{Binding CommitMessage, UpdateSourceTrigger=PropertyChanged}" 
+                                             Style="{StaticResource NeoTextBox}" Height="90" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                                    <Button Content="🚀 确认提交 (COMMIT)" Command="{Binding CommitChangesCommand}"
+                                            Style="{StaticResource NeoPrimaryButton}" HorizontalAlignment="Stretch"/>
+                                </StackPanel>
                             </Border>
                         </Grid>
 
-                        <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="#2B2B2B"/>
+                        <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Background="Transparent"/>
 
-                        <!-- Right: Live Diff for selected file -->
-                        <Border Grid.Column="2" Background="#181818">
+                        <!-- Right: Live Diff of Changed File -->
+                        <Border Grid.Column="2" Style="{StaticResource NeoSunkenCard}" Padding="12">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
 
-                                <Border Grid.Row="0" Background="#252526" Padding="10,6">
-                                    <DockPanel LastChildFill="True">
-                                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                                            <Button Content="暂存该文件" Command="{Binding StageFileCommand}" CommandParameter="{Binding SelectedStatusFile}"
-                                                    Background="#2D2D2D" Foreground="#9CDCFE" Padding="8,2" FontSize="11" Margin="2,0"/>
-                                            <Button Content="取消暂存" Command="{Binding UnstageFileCommand}" CommandParameter="{Binding SelectedStatusFile}"
-                                                    Background="#2D2D2D" Foreground="#CE9178" Padding="8,2" FontSize="11" Margin="2,0"/>
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding SelectedStatusFile.FilePath, StringFormat='文件差异对比: {0}'}" 
-                                                   Foreground="#ECECEC" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                    </DockPanel>
-                                </Border>
+                                <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                        <Button Content="暂存此文件" Command="{Binding StageFileCommand}" CommandParameter="{Binding SelectedStatusFile}"
+                                                Style="{StaticResource NeoButton}" Padding="8,4" FontSize="11" Margin="0,0,6,0"/>
+                                        <Button Content="取消暂存" Command="{Binding UnstageFileCommand}" CommandParameter="{Binding SelectedStatusFile}"
+                                                Style="{StaticResource NeoButton}" Padding="8,4" FontSize="11"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding SelectedStatusFile.FilePath, StringFormat='DIFF PREVIEW: {0}'}" 
+                                               Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                </DockPanel>
 
                                 <ListBox Grid.Row="1" ItemsSource="{Binding CurrentDiff.Lines}"
-                                         Background="#181818" BorderThickness="0"
-                                         FontFamily="Consolas, Cascadia Code, Courier New" FontSize="12">
+                                         Background="Transparent" BorderThickness="0"
+                                         FontFamily="Cascadia Code, Consolas, Courier New" FontSize="12">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Background="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=Background}" Padding="6,1">
+                                            <Border Background="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=Background}" 
+                                                    CornerRadius="4" Padding="6,2" Margin="0,1">
                                                 <TextBlock Text="{Binding Text}" 
                                                            Foreground="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=Foreground}"/>
                                             </Border>
@@ -346,18 +446,18 @@
                             </Grid>
                         </Border>
                     </Grid>
-                </TabItem>
-            </TabControl>
+                </Grid>
+            </Border>
         </Grid>
 
-        <!-- Status Bar -->
-        <Border Grid.Row="2" Background="#1F1F1F" BorderBrush="#2B2B2B" BorderThickness="0,1,0,0" Padding="8,3">
+        <!-- STATUS BAR -->
+        <Border Grid.Row="2" Style="{StaticResource NeoSunkenCard}" Padding="14,6" Margin="0,12,0,0">
             <DockPanel LastChildFill="True">
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                    <TextBlock Text="引擎: LibGit2Sharp (Native)" Foreground="#6A9955" FontSize="11" Margin="8,0"/>
-                    <TextBlock Text="UTF-8" Foreground="#858585" FontSize="11" Margin="8,0"/>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                    <TextBlock Text="LibGit2Sharp Native Engine" Foreground="{StaticResource NeoTextMuted}" FontSize="11" Margin="0,0,16,0"/>
+                    <TextBlock Text="UTF-8" Foreground="{StaticResource NeoTextMuted}" FontSize="11"/>
                 </StackPanel>
-                <TextBlock Text="{Binding StatusMessage}" Foreground="#A0A0A0" FontSize="11" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource NeoTextSecondary}" FontSize="11" VerticalAlignment="Center"/>
             </DockPanel>
         </Border>
     </Grid>

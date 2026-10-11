@@ -1,0 +1,204 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Neo Palette based on Figma Neomorphism Guide -->
+    <Color x:Key="NeoBgColor">#181A20</Color>
+    <Color x:Key="NeoSurfaceColor">#21252E</Color>
+    <Color x:Key="NeoSurfaceLightColor">#282D38</Color>
+    <Color x:Key="NeoSunkenColor">#14161B</Color>
+
+    <Color x:Key="NeoAccentOrangeColor">#FF7700</Color>
+    <Color x:Key="NeoAccentOrangeLight">#FFA043</Color>
+    <Color x:Key="NeoAccentBlueColor">#3B82F6</Color>
+    <Color x:Key="NeoAccentCyanColor">#06B6D4</Color>
+    <Color x:Key="NeoAccentGreenColor">#10B981</Color>
+    <Color x:Key="NeoAccentRedColor">#EF4444</Color>
+
+    <SolidColorBrush x:Key="NeoBgBrush" Color="{StaticResource NeoBgColor}"/>
+    <SolidColorBrush x:Key="NeoSurfaceBrush" Color="{StaticResource NeoSurfaceColor}"/>
+    <SolidColorBrush x:Key="NeoSunkenBrush" Color="{StaticResource NeoSunkenColor}"/>
+    <SolidColorBrush x:Key="NeoTextPrimary" Color="#F3F4F6"/>
+    <SolidColorBrush x:Key="NeoTextSecondary" Color="#9CA3AF"/>
+    <SolidColorBrush x:Key="NeoTextMuted" Color="#6B7280"/>
+    <SolidColorBrush x:Key="NeoAccentOrangeBrush" Color="{StaticResource NeoAccentOrangeColor}"/>
+
+    <!-- 3D Bevel Gradients -->
+    <LinearGradientBrush x:Key="NeoRaisedBorderBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#404656" Offset="0.0"/>
+        <GradientStop Color="#2B303C" Offset="0.5"/>
+        <GradientStop Color="#121418" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="NeoSunkenBorderBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#0D0E12" Offset="0.0"/>
+        <GradientStop Color="#1C2028" Offset="0.7"/>
+        <GradientStop Color="#353B49" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="NeoSurfaceGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#262A34" Offset="0.0"/>
+        <GradientStop Color="#1D2028" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="NeoOrangeGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource NeoAccentOrangeLight}" Offset="0.0"/>
+        <GradientStop Color="{StaticResource NeoAccentOrangeColor}" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <!-- Soft Drop Shadows -->
+    <DropShadowEffect x:Key="NeoCardShadow" BlurRadius="22" Direction="315" ShadowDepth="8" Opacity="0.6" Color="#0B0C0F"/>
+    <DropShadowEffect x:Key="NeoButtonShadow" BlurRadius="12" Direction="315" ShadowDepth="4" Opacity="0.5" Color="#0B0C0F"/>
+    <DropShadowEffect x:Key="NeoGlowOrange" BlurRadius="18" Direction="0" ShadowDepth="0" Opacity="0.75" Color="#FF7700"/>
+    <DropShadowEffect x:Key="NeoGlowBlue" BlurRadius="16" Direction="0" ShadowDepth="0" Opacity="0.65" Color="#3B82F6"/>
+
+    <!-- Neo Card Style -->
+    <Style x:Key="NeoCard" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource NeoSurfaceGradient}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource NeoRaisedBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1.2"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Effect" Value="{StaticResource NeoCardShadow}"/>
+    </Style>
+
+    <!-- Neo Sunken Panel Style -->
+    <Style x:Key="NeoSunkenCard" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource NeoSunkenBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource NeoSunkenBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1.2"/>
+        <Setter Property="CornerRadius" Value="12"/>
+    </Style>
+
+    <!-- Neo Button Style -->
+    <Style x:Key="NeoButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource NeoTextPrimary}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="btnBorder" Background="{StaticResource NeoSurfaceGradient}"
+                            BorderBrush="{StaticResource NeoRaisedBorderBrush}" BorderThickness="1.2"
+                            CornerRadius="12" Padding="{TemplateBinding Padding}"
+                            Effect="{StaticResource NeoButtonShadow}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="btnBorder" Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#2C313E" Offset="0.0"/>
+                                        <GradientStop Color="#222630" Offset="1.0"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="btnBorder" Property="BorderBrush">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="#4F576A" Offset="0.0"/>
+                                        <GradientStop Color="#181A20" Offset="1.0"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="btnBorder" Property="Background" Value="{StaticResource NeoSunkenBrush}"/>
+                            <Setter TargetName="btnBorder" Property="BorderBrush" Value="{StaticResource NeoSunkenBorderBrush}"/>
+                            <Setter TargetName="btnBorder" Property="Effect" Value="{x:Null}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Neo Primary Accent Glow Button (Orange Neon) -->
+    <Style x:Key="NeoPrimaryButton" TargetType="Button">
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Padding" Value="18,9"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="glowBorder" Background="{StaticResource NeoOrangeGradient}"
+                            BorderBrush="#FFB066" BorderThickness="1"
+                            CornerRadius="14" Padding="{TemplateBinding Padding}"
+                            Effect="{StaticResource NeoGlowOrange}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="glowBorder" Property="Opacity" Value="0.92"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="glowBorder" Property="Opacity" Value="0.8"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Neo Secondary Accent Button (Electric Cyan/Blue) -->
+    <Style x:Key="NeoAccentBlueButton" TargetType="Button">
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Padding" Value="14,7"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="blueBorder" Background="#2563EB"
+                            BorderBrush="#60A5FA" BorderThickness="1"
+                            CornerRadius="12" Padding="{TemplateBinding Padding}"
+                            Effect="{StaticResource NeoGlowBlue}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="blueBorder" Property="Opacity" Value="0.9"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="blueBorder" Property="Opacity" Value="0.75"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Neo Inset / Sunken TextBox -->
+    <Style x:Key="NeoTextBox" TargetType="TextBox">
+        <Setter Property="Background" Value="{StaticResource NeoSunkenBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource NeoTextPrimary}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource NeoAccentOrangeBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource NeoSunkenBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1.2"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="border" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="12">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="0"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource NeoAccentOrangeBrush}"/>
+                            <Setter TargetName="border" Property="Effect" Value="{StaticResource NeoGlowOrange}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

@@ -3,19 +3,18 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:vm="clr-namespace:OhMyGittForWin.ViewModels"
         mc:Ignorable="d"
-        Title="3-Way Merge 冲突解决器 (IDEA 风格)" 
-        Height="700" Width="1100"
+        Title="3-Way Merge 冲突解决器 - Neomorphic Edition" 
+        Height="760" Width="1180"
         WindowStartupLocation="CenterOwner"
-        Background="#1E1E1E">
+        Background="{StaticResource NeoBgBrush}">
 
     <Window.DataContext>
         <vm:ThreeWayMergeViewModel />
     </Window.DataContext>
 
-    <Grid Margin="12">
+    <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -23,128 +22,126 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Top Bar -->
-        <Border Grid.Row="0" Background="#252526" CornerRadius="6" Padding="12,8" Margin="0,0,0,8">
+        <!-- Top Header Card -->
+        <Border Grid.Row="0" Style="{StaticResource NeoCard}" Padding="16,12" Margin="0,0,0,12">
             <DockPanel LastChildFill="True">
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                    <Button Content="✨ 自动解决简单冲突" 
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                    <Button Content="✨ 自动消解简单冲突" 
                             Command="{Binding AutoResolveAllCommand}"
-                            Background="#0078D4" Foreground="White" Margin="4,0" Padding="10,4"/>
-                    <Button Content="💾 保存并标记为已解决" 
+                            Style="{StaticResource NeoButton}" Margin="0,0,10,0"/>
+                    <Button Content="💾 保存并解决 (APPLY)" 
                             Command="{Binding SaveAndCloseCommand}"
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
-                            Background="#107C41" Foreground="White" Margin="4,0" Padding="10,4" FontWeight="SemiBold"/>
+                            Style="{StaticResource NeoPrimaryButton}"/>
                 </StackPanel>
                 <StackPanel Orientation="Vertical">
-                    <TextBlock Text="冲突解决器 (Resolve Conflicts)" FontSize="15" FontWeight="Bold" Foreground="#ECECEC"/>
-                    <TextBlock Text="{Binding FileName, StringFormat='正在解决文件: {0}'}" FontSize="12" Foreground="#858585" Margin="0,2,0,0"/>
+                    <TextBlock Text="3-WAY CONFLICT RESOLVER" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11"/>
+                    <TextBlock Text="{Binding FileName, StringFormat='正在解决冲突文件: {0}'}" 
+                               Foreground="{StaticResource NeoTextPrimary}" FontSize="15" FontWeight="Bold" Margin="0,2,0,0"/>
                 </StackPanel>
             </DockPanel>
         </Border>
 
-        <!-- Quick Chunk Navigator & Operations -->
-        <Border Grid.Row="1" Background="#2D2D30" CornerRadius="6" Padding="10,6" Margin="0,0,0,8">
+        <!-- Action Bar: Fast accept actions and status pill -->
+        <Border Grid.Row="1" Style="{StaticResource NeoSunkenCard}" Padding="12,8" Margin="0,0,0,12">
             <DockPanel LastChildFill="True">
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
                     <Button Content="&gt;&gt; 采纳左侧 (Local)" 
                             Command="{Binding AcceptLocalCommand}"
-                            Background="#3399FF" Foreground="White" Margin="4,0" Padding="8,3"/>
+                            Style="{StaticResource NeoAccentBlueButton}" Margin="0,0,8,0"/>
                     <Button Content="&lt;&lt; 采纳右侧 (Remote)" 
                             Command="{Binding AcceptRemoteCommand}"
-                            Background="#9CDCFE" Foreground="#1E1E1E" Margin="4,0" Padding="8,3" FontWeight="Bold"/>
+                            Style="{StaticResource NeoButton}" Margin="0,0,8,0"/>
                     <Button Content="⚡ 合并双侧" 
                             Command="{Binding AcceptBothCommand}"
-                            Background="#DCDCAA" Foreground="#1E1E1E" Margin="4,0" Padding="8,3"/>
+                            Style="{StaticResource NeoButton}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding StatusText}" Foreground="#DCDCAA" FontWeight="Medium" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding StatusText}" Foreground="#FBBF24" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
                 </StackPanel>
             </DockPanel>
         </Border>
 
-        <!-- The 3 Columns (Left: Local, Middle: Result, Right: Remote) -->
+        <!-- 3 Columns (Left: Local, Middle: Result, Right: Remote) -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="6"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="6"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="1.1*"/>
+                <ColumnDefinition Width="10"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Column 1: Local / Ours -->
-            <Border Grid.Column="0" Background="#252526" CornerRadius="6" BorderBrush="#3E3E42" BorderThickness="1">
+            <!-- Column 1: Local / Ours (Cyan/Blue Theme) -->
+            <Border Grid.Column="0" Style="{StaticResource NeoCard}" Padding="10">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Background="#1B3A4B" Padding="10,6" CornerRadius="6,6,0,0">
-                        <DockPanel>
-                            <Button DockPanel.Dock="Right" Content="采纳此版本 &gt;&gt;" 
-                                    Command="{Binding AcceptLocalCommand}"
-                                    Padding="6,2" FontSize="11" Background="#264F78" Foreground="White"/>
-                            <TextBlock Text="本地修改 (Local / HEAD)" Foreground="#569CD6" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                        </DockPanel>
-                    </Border>
+                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Right" Content="采纳 &gt;&gt;" 
+                                Command="{Binding AcceptLocalCommand}"
+                                Style="{StaticResource NeoAccentBlueButton}" Padding="8,3" FontSize="11"/>
+                        <TextBlock Text="本地修改 (LOCAL / HEAD)" Foreground="#38BDF8" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                    </DockPanel>
                     <TextBox Grid.Row="1" Text="{Binding SelectedChunk.LocalText, Mode=OneWay}"
                              IsReadOnly="True" AcceptsReturn="True" AcceptsTab="True"
-                             FontFamily="Consolas, Cascadia Code, Courier New" FontSize="13"
-                             Background="#1E1E1E" Foreground="#D4D4D4" BorderThickness="0"
-                             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="8"/>
+                             FontFamily="Cascadia Code, Consolas" FontSize="12"
+                             Style="{StaticResource NeoTextBox}" Padding="10"/>
                 </Grid>
             </Border>
 
-            <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Background="#333337"/>
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="Transparent"/>
 
-            <!-- Column 2: Result (Interactive / Editable) -->
-            <Border Grid.Column="2" Background="#252526" CornerRadius="6" BorderBrush="#0E639C" BorderThickness="1.5">
+            <!-- Column 2: Result (Green Glow / Interactive) -->
+            <Border Grid.Column="2" Style="{StaticResource NeoCard}" Padding="10">
+                <Border.Effect>
+                    <DropShadowEffect Color="#10B981" BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
+                </Border.Effect>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Background="#0E639C" Padding="10,6" CornerRadius="4,4,0,0">
-                        <TextBlock Text="合并结果 (Result / 可编辑)" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    <Border Grid.Row="0" Margin="0,0,0,8" Padding="4">
+                        <TextBlock Text="⭐ 最终合并结果 (RESULT / 实时可编辑)" Foreground="#10B981" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center"/>
                     </Border>
                     <TextBox Grid.Row="1" Text="{Binding SelectedChunk.ResultText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                              AcceptsReturn="True" AcceptsTab="True"
-                             FontFamily="Consolas, Cascadia Code, Courier New" FontSize="13"
-                             Background="#1E1E1E" Foreground="#4EC9B0" BorderThickness="0"
-                             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="8"/>
+                             FontFamily="Cascadia Code, Consolas" FontSize="12"
+                             Foreground="#34D399"
+                             Style="{StaticResource NeoTextBox}" Padding="10"/>
                 </Grid>
             </Border>
 
-            <GridSplitter Grid.Column="3" Width="6" HorizontalAlignment="Stretch" Background="#333337"/>
+            <GridSplitter Grid.Column="3" Width="4" HorizontalAlignment="Stretch" Background="Transparent"/>
 
-            <!-- Column 3: Remote / Incoming -->
-            <Border Grid.Column="4" Background="#252526" CornerRadius="6" BorderBrush="#3E3E42" BorderThickness="1">
+            <!-- Column 3: Remote / Incoming (Orange/Amber Theme) -->
+            <Border Grid.Column="4" Style="{StaticResource NeoCard}" Padding="10">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Background="#3B2E1E" Padding="10,6" CornerRadius="6,6,0,0">
-                        <DockPanel>
-                            <Button DockPanel.Dock="Right" Content="&lt;&lt; 采纳此版本" 
-                                    Command="{Binding AcceptRemoteCommand}"
-                                    Padding="6,2" FontSize="11" Background="#6B5024" Foreground="White"/>
-                            <TextBlock Text="传入修改 (Remote / Incoming)" Foreground="#CE9178" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                        </DockPanel>
-                    </Border>
+                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Right" Content="&lt;&lt; 采纳" 
+                                Command="{Binding AcceptRemoteCommand}"
+                                Style="{StaticResource NeoButton}" Padding="8,3" FontSize="11"/>
+                        <TextBlock Text="传入修改 (REMOTE / THEIRS)" Foreground="#FB923C" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                    </DockPanel>
                     <TextBox Grid.Row="1" Text="{Binding SelectedChunk.RemoteText, Mode=OneWay}"
                              IsReadOnly="True" AcceptsReturn="True" AcceptsTab="True"
-                             FontFamily="Consolas, Cascadia Code, Courier New" FontSize="13"
-                             Background="#1E1E1E" Foreground="#D4D4D4" BorderThickness="0"
-                             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="8"/>
+                             FontFamily="Cascadia Code, Consolas" FontSize="12"
+                             Style="{StaticResource NeoTextBox}" Padding="10"/>
                 </Grid>
             </Border>
         </Grid>
 
         <!-- Bottom Chunk Selector -->
-        <Border Grid.Row="3" Background="#252526" CornerRadius="6" Padding="8" Margin="0,8,0,0">
+        <Border Grid.Row="3" Style="{StaticResource NeoSunkenCard}" Padding="12,8" Margin="0,12,0,0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="冲突块选择: " Foreground="#858585" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock Text="冲突块切换: " Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0"/>
                 <ListBox ItemsSource="{Binding Chunks}" SelectedItem="{Binding SelectedChunk}"
                          ScrollViewer.HorizontalScrollBarVisibility="Auto" Background="Transparent" BorderThickness="0">
                     <ListBox.ItemsPanel>
@@ -154,10 +151,10 @@
                     </ListBox.ItemsPanel>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="#333337" CornerRadius="4" Padding="8,4" Margin="3,0">
+                            <Border Style="{StaticResource NeoCard}" Padding="8,4" Margin="3,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding ChunkIndex, StringFormat='块 #{0} '}" Foreground="White" FontWeight="Bold"/>
-                                    <TextBlock Text="{Binding StatusDescription}" Foreground="#CE9178" FontSize="11"/>
+                                    <TextBlock Text="{Binding ChunkIndex, StringFormat='块 #{0} '}" Foreground="{StaticResource NeoTextPrimary}" FontWeight="Bold" FontSize="11"/>
+                                    <TextBlock Text="{Binding StatusDescription}" Foreground="#F59E0B" FontSize="10"/>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
