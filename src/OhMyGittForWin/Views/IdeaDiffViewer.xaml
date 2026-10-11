@@ -10,6 +10,7 @@
 
     <UserControl.Resources>
         <conv:DiffTypeToColorConverter x:Key="DiffColorConv" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
 
     <Grid>
