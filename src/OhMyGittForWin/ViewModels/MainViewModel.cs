@@ -59,6 +59,9 @@ public partial class MainViewModel : ObservableObject
     private IdeaFileDiffResult? _currentIdeaDiff;
 
     [ObservableProperty]
+    private IdeaFileDiffResult? _statusIdeaDiff;
+
+    [ObservableProperty]
     private int _selectedTabIndex = 0; // 0: Log, 1: Commit
 
     public ObservableCollection<GitBranchItem> Branches { get; } = new();
@@ -134,6 +137,16 @@ public partial class MainViewModel : ObservableObject
 
                     StatusFiles.Clear();
                     foreach (var s in statusList) StatusFiles.Add(s);
+
+                    if (StatusFiles.Count > 0)
+                    {
+                        SelectedStatusFile = StatusFiles[0];
+                    }
+                    else
+                    {
+                        SelectedStatusFile = null;
+                        StatusIdeaDiff = null;
+                    }
 
                     _allCommits = commitList;
                     ApplyCommitFilter();
@@ -329,7 +342,17 @@ public partial class MainViewModel : ObservableObject
         _diffFileSelectionCts?.Dispose();
         _diffFileSelectionCts = null;
 
-        if (value == null || string.IsNullOrWhiteSpace(RepoPath)) return;
+        if (value == null)
+        {
+            StatusIdeaDiff = null;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(RepoPath))
+        {
+            StatusIdeaDiff = null;
+            return;
+        }
 
         var repoPath = RepoPath;
         var filePath = value.FilePath;
@@ -348,7 +371,7 @@ public partial class MainViewModel : ObservableObject
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     if (cts.Token.IsCancellationRequested) return;
-                    CurrentIdeaDiff = ideaDiff;
+                    StatusIdeaDiff = ideaDiff;
                 });
             }
             catch (Exception ex)
