@@ -1,0 +1,155 @@
+<UserControl x:Class="OhMyGittForWin.Views.IdeaDiffViewer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:conv="clr-namespace:OhMyGittForWin.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="900"
+             Background="Transparent">
+
+    <UserControl.Resources>
+        <conv:DiffTypeToColorConverter x:Key="DiffColorConv" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Diff Toolbar (IDEA Style) -->
+        <Border Grid.Row="0" Style="{StaticResource NeoSunkenCard}" Padding="10,6" Margin="0,0,0,8">
+            <DockPanel LastChildFill="True">
+                <!-- Right Diff Stats -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                    <!-- Insertions Pill -->
+                    <Border Background="#163821" BorderBrush="#22C55E" BorderThickness="0.8" CornerRadius="8" Padding="7,2" Margin="0,0,6,0">
+                        <TextBlock Text="{Binding Additions, StringFormat='+{0}'}" Foreground="#86EFAC" FontWeight="Bold" FontSize="11"/>
+                    </Border>
+                    <!-- Deletions Pill -->
+                    <Border Background="#3E1D22" BorderBrush="#EF4444" BorderThickness="0.8" CornerRadius="8" Padding="7,2" Margin="0,0,6,0">
+                        <TextBlock Text="{Binding Deletions, StringFormat='-{0}'}" Foreground="#FCA5A5" FontWeight="Bold" FontSize="11"/>
+                    </Border>
+                    <!-- Modifications Pill -->
+                    <Border Background="#1A2D4A" BorderBrush="#3B82F6" BorderThickness="0.8" CornerRadius="8" Padding="7,2">
+                        <TextBlock Text="{Binding Modifications, StringFormat='~{0}'}" Foreground="#93C5FD" FontWeight="Bold" FontSize="11"/>
+                    </Border>
+                </StackPanel>
+
+                <!-- Left File Info -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="📄 " FontSize="12"/>
+                    <TextBlock Text="{Binding FilePath}" Foreground="{StaticResource NeoTextPrimary}" FontWeight="SemiBold" FontSize="12" Margin="0,0,12,0"/>
+                    <TextBlock Text="双栏并排比对 (Side-by-Side)" Foreground="{StaticResource NeoTextMuted}" FontSize="11" VerticalAlignment="Center"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Column Headers (Left: Base, Right: Modified) -->
+        <Border Grid.Row="1" Background="#1B1E26" BorderBrush="#2A2F3D" BorderThickness="0,0,0,1" Padding="0,4" Margin="0,0,0,4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="42"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="42"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left Header -->
+                <TextBlock Grid.Column="0" Text="#" Foreground="{StaticResource NeoTextMuted}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="BASE / 基础版本 (HEAD / 原版)" Foreground="#60A5FA" FontWeight="Bold" FontSize="11" Margin="6,0,0,0"/>
+
+                <!-- Middle Divider -->
+                <Border Grid.Column="2" BorderBrush="#2E3445" BorderThickness="0.8,0,0,0" HorizontalAlignment="Center"/>
+
+                <!-- Right Header -->
+                <TextBlock Grid.Column="3" Text="#" Foreground="{StaticResource NeoTextMuted}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center"/>
+                <TextBlock Grid.Column="4" Text="WORKING TREE / 本地变更 (当前修改)" Foreground="#F59E0B" FontWeight="Bold" FontSize="11" Margin="6,0,0,0"/>
+            </Grid>
+        </Border>
+
+        <!-- Main Dual-Pane Diff Content (100% Synchronized Grid) -->
+        <Border Grid.Row="2" Style="{StaticResource NeoSunkenCard}" Padding="0,4">
+            <ListBox ItemsSource="{Binding SideBySideRows}"
+                     Background="Transparent" BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     VirtualizingStackPanel.IsVirtualizing="True"
+                     VirtualizingStackPanel.VirtualizationMode="Recycling"
+                     FontFamily="JetBrains Mono, Cascadia Code, Consolas, Courier New" FontSize="12">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Margin" Value="0"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <ContentPresenter/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,0,0,1">
+                            <Grid.ColumnDefinitions>
+                                <!-- Left Gutter -->
+                                <ColumnDefinition Width="42"/>
+                                <!-- Left Code -->
+                                <ColumnDefinition Width="*"/>
+                                <!-- Central Divider Gutter -->
+                                <ColumnDefinition Width="16"/>
+                                <!-- Right Gutter -->
+                                <ColumnDefinition Width="42"/>
+                                <!-- Right Code -->
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Left Line Number Gutter -->
+                            <Border Grid.Column="0" Background="#14161C" Padding="0,1,6,1">
+                                <TextBlock Text="{Binding OldLineNumber}" Foreground="#4B5563" FontSize="11" 
+                                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <!-- Left Code Text & Diff Highlight -->
+                            <Border Grid.Column="1" 
+                                    Background="{Binding OldType, Converter={StaticResource DiffColorConv}, ConverterParameter=Background}"
+                                    BorderBrush="{Binding OldType, Converter={StaticResource DiffColorConv}, ConverterParameter=GutterBorder}"
+                                    BorderThickness="2,0,0,0"
+                                    Padding="8,1,4,1">
+                                <TextBlock Text="{Binding OldText}" 
+                                           Foreground="{Binding OldType, Converter={StaticResource DiffColorConv}, ConverterParameter=Foreground}"/>
+                            </Border>
+
+                            <!-- Center Divider -->
+                            <Border Grid.Column="2" Background="#161820" BorderBrush="#252A38" BorderThickness="0.8,0,0.8,0">
+                                <TextBlock Text="»" Foreground="#FF7700" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Visibility="{Binding IsDifference, Converter={StaticResource BoolToVis}}"/>
+                            </Border>
+
+                            <!-- Right Line Number Gutter -->
+                            <Border Grid.Column="3" Background="#14161C" Padding="0,1,6,1">
+                                <TextBlock Text="{Binding NewLineNumber}" Foreground="#4B5563" FontSize="11" 
+                                           HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <!-- Right Code Text & Diff Highlight -->
+                            <Border Grid.Column="4" 
+                                    Background="{Binding NewType, Converter={StaticResource DiffColorConv}, ConverterParameter=Background}"
+                                    BorderBrush="{Binding NewType, Converter={StaticResource DiffColorConv}, ConverterParameter=GutterBorder}"
+                                    BorderThickness="2,0,0,0"
+                                    Padding="8,1,4,1">
+                                <TextBlock Text="{Binding NewText}" 
+                                           Foreground="{Binding NewType, Converter={StaticResource DiffColorConv}, ConverterParameter=Foreground}"/>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+    </Grid>
+</UserControl>
