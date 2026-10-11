@@ -59,7 +59,7 @@ public class HunkRibbonConnector : FrameworkElement
 
     public HunkRibbonConnector()
     {
-        ClipToBounds = true; // Never bleed outside actual allocated bounds
+        ClipToBounds = true;
     }
 
     protected override void OnRender(DrawingContext dc)
@@ -77,61 +77,55 @@ public class HunkRibbonConnector : FrameworkElement
         double yLeftBottom;
         double yRightBottom;
 
+        const double NotchHeight = 2.0;
+        const double LineHeight = 22.0;
+
         if (HunkType == ChangeType.Inserted || LeftLineCount == 0)
         {
             // Pure insertion on right: Left starts as a 2px anchor notch at top, Right spans full height h
-            yLeftBottom = Math.Min(3.0, h);
+            yLeftBottom = Math.Min(NotchHeight, h);
             yRightBottom = h;
         }
         else if (HunkType == ChangeType.Deleted || RightLineCount == 0)
         {
             // Pure deletion on left: Left spans full height h, Right tapers to a 2px anchor notch at top
             yLeftBottom = h;
-            yRightBottom = Math.Min(3.0, h);
+            yRightBottom = Math.Min(NotchHeight, h);
         }
         else
         {
-            // Modified: Left and Right both have lines. Proportional heights capped strictly at h.
-            int maxLines = Math.Max(LeftLineCount, RightLineCount);
-            if (maxLines <= 0) maxLines = 1;
-
-            if (LeftLineCount == RightLineCount)
-            {
-                yLeftBottom = h;
-                yRightBottom = h;
-            }
-            else if (LeftLineCount < RightLineCount)
-            {
-                yLeftBottom = Math.Min(h, (LeftLineCount / (double)RightLineCount) * h);
-                yRightBottom = h;
-            }
-            else
-            {
-                yLeftBottom = h;
-                yRightBottom = Math.Min(h, (RightLineCount / (double)LeftLineCount) * h);
-            }
+            // Modified: Left and Right both have lines. Each side's bottom matches its actual line count height
+            yLeftBottom = Math.Min(h, LeftLineCount * LineHeight);
+            yRightBottom = Math.Min(h, RightLineCount * LineHeight);
         }
 
         var geom = new StreamGeometry();
         using (var ctx = geom.Open())
         {
             ctx.BeginFigure(new Point(0, yLeftTop), true, true);
-            // Top Bezier curve across middle gutter from (0, yLeftTop) to (w, yRightTop)
-            ctx.BezierTo(
-                new Point(w * 0.45, yLeftTop),
-                new Point(w * 0.55, yRightTop),
-                new Point(w, yRightTop),
-                true, true);
 
-            // Right boundary
+            // Top boundary: straight horizontal line from (0, yLeftTop) to (w, yRightTop)
+            ctx.LineTo(new Point(w, yRightTop), true, true);
+
+            // Right boundary: straight vertical line to (w, yRightBottom)
             ctx.LineTo(new Point(w, yRightBottom), true, true);
 
-            // Bottom Bezier curve returning to left (w, yRightBottom) to (0, yLeftBottom)
-            ctx.BezierTo(
-                new Point(w * 0.55, yRightBottom),
-                new Point(w * 0.45, yLeftBottom),
-                new Point(0, yLeftBottom),
-                true, true);
+            // Bottom boundary: smooth S-curve returning from (w, yRightBottom) to (0, yLeftBottom)
+            if (Math.Abs(yLeftBottom - yRightBottom) < 0.5)
+            {
+                ctx.LineTo(new Point(0, yLeftBottom), true, true);
+            }
+            else
+            {
+                ctx.BezierTo(
+                    new Point(w * 0.5, yRightBottom),
+                    new Point(w * 0.5, yLeftBottom),
+                    new Point(0, yLeftBottom),
+                    true, true);
+            }
+
+            // Left boundary: straight vertical line returning to (0, yLeftTop)
+            ctx.LineTo(new Point(0, yLeftTop), true, true);
         }
         geom.Freeze();
 

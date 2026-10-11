@@ -44,12 +44,18 @@
         <!-- 1. Top IDEA Header Toolbar -->
         <Border Grid.Row="0" Background="#2B2D30" BorderBrush="#393B40" BorderThickness="0,0,0,1" Padding="12,6">
             <DockPanel LastChildFill="True">
-                <!-- Right Summary: e.g. "3 differences, 0 included" -->
+                <!-- Right Summary: e.g. "3 differences (+14 ~22 -8), 0 included" -->
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
                     <Border Background="#1E2024" CornerRadius="4" Padding="8,3" BorderBrush="#3E4249" BorderThickness="1">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="{Binding TotalDifferences, StringFormat='{}{0} differences'}" Foreground="#9DA5B4" FontWeight="SemiBold" FontSize="11"/>
-                            <TextBlock Text=", " Foreground="#9DA5B4" FontSize="11"/>
+                            <TextBlock Text=" (" Foreground="#5C6370" FontSize="11"/>
+                            <TextBlock Text="{Binding Additions, StringFormat='+{0}'}" Foreground="#98C379" FontWeight="Bold" FontSize="11" ToolTip="Added lines"/>
+                            <TextBlock Text=" " Foreground="#5C6370" FontSize="11"/>
+                            <TextBlock Text="{Binding Modifications, StringFormat='~{0}'}" Foreground="#61AFEF" FontWeight="Bold" FontSize="11" ToolTip="Modified lines"/>
+                            <TextBlock Text=" " Foreground="#5C6370" FontSize="11"/>
+                            <TextBlock Text="{Binding Deletions, StringFormat='-{0}'}" Foreground="#E06C75" FontWeight="Bold" FontSize="11" ToolTip="Deleted lines"/>
+                            <TextBlock Text="), " Foreground="#5C6370" FontSize="11"/>
                             <TextBlock Text="{Binding IncludedCount, StringFormat='{}{0} included'}" Foreground="#E5C07B" FontSize="11"/>
                         </StackPanel>
                     </Border>
@@ -208,23 +214,14 @@
                                         RightLineCount="{Binding RightLineCount}"
                                         HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
 
-                                    <!-- Action Chevron » and Checkbox [ ] in the Center with Hunk Type Badge -->
-                                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Top">
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Height="22">
-                                            <Button Content="»" Width="14" Height="16" Padding="0" Margin="0,0,2,0"
-                                                    Background="Transparent" BorderThickness="0" Foreground="#61AFEF" FontWeight="Bold" FontSize="11"
-                                                    Cursor="Hand" ToolTip="Revert / Apply change"
-                                                    Visibility="{Binding HasDifferences, Converter={StaticResource BoolToVis}}"/>
-
-                                            <CheckBox IsChecked="{Binding IsIncluded}" VerticalAlignment="Center"
-                                                      Visibility="{Binding HasDifferences, Converter={StaticResource BoolToVis}}"/>
-                                        </StackPanel>
-
-                                        <!-- Hunk Semantic Badge (e.g. 3 ➔ 35 修改 or +37 新增) -->
-                                        <Border Background="{Binding TypeBadgeBackground}" CornerRadius="4" Padding="5,1" Margin="0,1"
+                                    <!-- Action Chevron » and Checkbox [ ] aligned on the first line (Height=22) -->
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Height="22"
                                                 Visibility="{Binding HasDifferences, Converter={StaticResource BoolToVis}}">
-                                            <TextBlock Text="{Binding TypeBadgeText}" Foreground="White" FontWeight="Bold" FontSize="9" HorizontalAlignment="Center"/>
-                                        </Border>
+                                        <Button Content="»" Width="14" Height="16" Padding="0" Margin="0,0,3,0"
+                                                Background="Transparent" BorderThickness="0" Foreground="#61AFEF" FontWeight="Bold" FontSize="12"
+                                                Cursor="Hand" ToolTip="Revert / Apply change"/>
+
+                                        <CheckBox IsChecked="{Binding IsIncluded}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Grid>
 
