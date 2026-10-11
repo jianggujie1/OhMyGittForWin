@@ -285,4 +285,61 @@ public class GitService : IGitService
 
         return result;
     }
+
+    public IdeaFileDiffResult GetIdeaFileDiff(string repoPath, string relativePath, bool isStaged)
+    {
+        using var repo = new Repository(repoPath);
+        string oldContent = string.Empty;
+        string newContent = string.Empty;
+
+        var headCommit = repo.Head.Tip;
+        if (headCommit != null)
+        {
+            var treeEntry = headCommit[relativePath];
+            if (treeEntry != null && treeEntry.TargetType == TreeEntryTargetType.Blob)
+            {
+                var blob = (Blob)treeEntry.Target;
+                oldContent = blob.GetContentText();
+            }
+        }
+
+        string fullPath = Path.Combine(repo.Info.WorkingDirectory, relativePath);
+        if (File.Exists(fullPath))
+        {
+            try { newContent = File.ReadAllText(fullPath); } catch { newContent = string.Empty; }
+        }
+
+        string shortSha = headCommit != null ? headCommit.Sha.Substring(0, Math.Min(7, headCommit.Sha.Length)) : "HEAD";
+        return _diffService.BuildIdeaDiff(relativePath, oldContent, newContent, shortSha, "Current version");
+    }
+
+    public IdeaFileDiffResult GetIdeaCommitFileDiff(string repoPath, string commitSha, string relativePath)
+    {
+        using var repo = new Repository(repoPath);
+        var commit = repo.Lookup<Commit>(commitSha);
+        if (commit == null) return new IdeaFileDiffResult { FilePath = relativePath };
+
+        string oldContent = string.Empty;
+        string newContent = string.Empty;
+
+        var currentEntry = commit[relativePath];
+        if (currentEntry != null && currentEntry.TargetType == TreeEntryTargetType.Blob)
+        {
+            newContent = ((Blob)currentEntry.Target).GetContentText();
+        }
+
+        var parent = commit.Parents.FirstOrDefault();
+        if (parent != null)
+        {
+            var parentEntry = parent[relativePath];
+            if (parentEntry != null && parentEntry.TargetType == TreeEntryTargetType.Blob)
+            {
+                oldContent = ((Blob)parentEntry.Target).GetContentText();
+            }
+        }
+
+        string leftSha = parent != null ? parent.Sha.Substring(0, Math.Min(7, parent.Sha.Length)) : "Root";
+        string rightSha = commit.Sha.Substring(0, Math.Min(7, commit.Sha.Length));
+        return _diffService.BuildIdeaDiff(relativePath, oldContent, newContent, leftSha, $"Commit {rightSha}");
+    }
 }

@@ -321,8 +321,8 @@
 
                             <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Background="Transparent"/>
 
-                            <!-- IDEA-Style Dual-Pane Diff Viewer -->
-                            <views:IdeaDiffViewer Grid.Column="2" DataContext="{Binding CurrentDiff}"/>
+                            <!-- IDEA-Style Dual-Pane Diff Viewer with Connecting Ribbons -->
+                            <views:IdeaDiffViewer Grid.Column="2" DataContext="{Binding CurrentIdeaDiff}"/>
                         </Grid>
                     </Grid>
 
@@ -408,8 +408,8 @@
                                            Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
                             </DockPanel>
 
-                            <!-- Embedded Dual-Pane IDEA Diff Viewer -->
-                            <views:IdeaDiffViewer Grid.Row="1" DataContext="{Binding CurrentDiff}"/>
+                            <!-- Embedded Dual-Pane IDEA Diff Viewer with Connecting Ribbons -->
+                            <views:IdeaDiffViewer Grid.Row="1" DataContext="{Binding CurrentIdeaDiff}"/>
                         </Grid>
                     </Grid>
                 </Grid>

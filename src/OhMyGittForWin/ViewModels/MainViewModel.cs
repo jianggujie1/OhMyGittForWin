@@ -51,6 +51,9 @@ public partial class MainViewModel : ObservableObject
     private FileDiffResult? _currentDiff;
 
     [ObservableProperty]
+    private IdeaFileDiffResult? _currentIdeaDiff;
+
+    [ObservableProperty]
     private int _selectedTabIndex = 0; // 0: Log, 1: Commit
 
     public ObservableCollection<GitBranchItem> Branches { get; } = new();
@@ -200,6 +203,7 @@ public partial class MainViewModel : ObservableObject
         try
         {
             CurrentDiff = _gitService.GetCommitFileDiff(RepoPath, SelectedCommit.Sha, value);
+            CurrentIdeaDiff = _gitService.GetIdeaCommitFileDiff(RepoPath, SelectedCommit.Sha, value);
         }
         catch (Exception ex)
         {
@@ -213,6 +217,7 @@ public partial class MainViewModel : ObservableObject
         try
         {
             CurrentDiff = _gitService.GetFileDiff(RepoPath, value.FilePath, value.IsStaged);
+            CurrentIdeaDiff = _gitService.GetIdeaFileDiff(RepoPath, value.FilePath, value.IsStaged);
         }
         catch (Exception ex)
         {

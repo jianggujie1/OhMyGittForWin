@@ -18,5 +18,7 @@ public interface IGitService
     void Commit(string repoPath, string message, string? authorName = null, string? authorEmail = null);
     FileDiffResult GetFileDiff(string repoPath, string relativePath, bool isStaged);
     FileDiffResult GetCommitFileDiff(string repoPath, string commitSha, string relativePath);
+    IdeaFileDiffResult GetIdeaFileDiff(string repoPath, string relativePath, bool isStaged);
+    IdeaFileDiffResult GetIdeaCommitFileDiff(string repoPath, string commitSha, string relativePath);
     List<string> GetChangedFilesForCommit(string repoPath, string commitSha);
 }
