@@ -201,4 +201,78 @@
         </Setter>
     </Style>
 
+    <!-- Neo ListBoxItem Style with Hover & Selection Animations -->
+    <Style x:Key="NeoListBoxItem" TargetType="ListBoxItem">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource NeoTextPrimary}"/>
+        <Setter Property="Padding" Value="8,5"/>
+        <Setter Property="Margin" Value="0,1"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Bd" 
+                            Background="{TemplateBinding Background}" 
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="6" 
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <Grid>
+                            <!-- Hover Layer -->
+                            <Border x:Name="HoverLayer" 
+                                    Background="#222736" 
+                                    BorderBrush="#31394B" 
+                                    BorderThickness="1" 
+                                    CornerRadius="5" 
+                                    Opacity="0"
+                                    Margin="-6,-4"/>
+                            <!-- Selected Layer -->
+                            <Border x:Name="SelectedLayer" 
+                                    Background="#273145" 
+                                    BorderBrush="#3B82F6" 
+                                    BorderThickness="1" 
+                                    CornerRadius="5" 
+                                    Opacity="0"
+                                    Margin="-6,-4">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="10" Direction="0" ShadowDepth="0" Opacity="0.35" Color="#3B82F6"/>
+                                </Border.Effect>
+                            </Border>
+                            <!-- Left Active Indicator Pill -->
+                            <Border x:Name="ActiveIndicator"
+                                    Width="3"
+                                    Height="14"
+                                    CornerRadius="1.5"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Margin="-4,0,0,0"
+                                    Background="#38BDF8"
+                                    Opacity="0"/>
+                            <!-- Content -->
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              Margin="4,0,0,0"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsSelected" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="HoverLayer" Property="Opacity" Value="0.85"/>
+                        </MultiTrigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="SelectedLayer" Property="Opacity" Value="1"/>
+                            <Setter TargetName="ActiveIndicator" Property="Opacity" Value="1"/>
+                            <Setter Property="Foreground" Value="#FFFFFF"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>
