@@ -44,7 +44,7 @@ public class DiffService
 
             if (isUnchanged)
             {
-                // Gather block of unchanged lines
+                // Unchanged block
                 var hunk = new IdeaDiffHunk
                 {
                     HunkId = hunkId++,
@@ -81,12 +81,9 @@ public class DiffService
             }
             else
             {
-                // Gather changed hunk block
-                var hunk = new IdeaDiffHunk
-                {
-                    HunkId = hunkId++,
-                    Type = ChangeType.Modified
-                };
+                // Changed block (collect contiguous diff lines)
+                var rawLeftLines = new List<IdeaDiffLine>();
+                var rawRightLines = new List<IdeaDiffLine>();
 
                 while (i < maxLines)
                 {
@@ -95,7 +92,26 @@ public class DiffService
 
                     bool currentUnchanged = (op != null && op.Type == ChangeType.Unchanged) &&
                                             (np != null && np.Type == ChangeType.Unchanged);
-                    if (currentUnchanged) break;
+
+                    // If we encounter a tiny 1-line unchanged gap (e.g. single closing brace '}'), peek ahead:
+                    // If more changes immediately follow, absorb it so the change isn't fragmented!
+                    if (currentUnchanged)
+                    {
+                        int lookAhead = i + 1;
+                        bool followedByChange = false;
+                        if (lookAhead < maxLines)
+                        {
+                            var nextOp = lookAhead < model.OldText.Lines.Count ? model.OldText.Lines[lookAhead] : null;
+                            var nextNp = lookAhead < model.NewText.Lines.Count ? model.NewText.Lines[lookAhead] : null;
+                            followedByChange = (nextOp != null && nextOp.Type != ChangeType.Unchanged) ||
+                                               (nextNp != null && nextNp.Type != ChangeType.Unchanged);
+                        }
+
+                        if (!followedByChange)
+                        {
+                            break; // Genuine unchanged section begins
+                        }
+                    }
 
                     if (op != null && op.Type != ChangeType.Imaginary)
                     {
@@ -106,7 +122,6 @@ public class DiffService
                             Type = op.Type
                         };
 
-                        // Extract sub-piece word diff if available
                         if (op.SubPieces != null && op.SubPieces.Count > 0)
                         {
                             foreach (var sp in op.SubPieces)
@@ -123,7 +138,7 @@ public class DiffService
                             leftLine.WordPieces.Add(new IdeaWordPiece { Text = leftLine.Text, IsHighlighted = false });
                         }
 
-                        hunk.LeftLines.Add(leftLine);
+                        rawLeftLines.Add(leftLine);
                     }
 
                     if (np != null && np.Type != ChangeType.Imaginary)
@@ -151,28 +166,42 @@ public class DiffService
                             rightLine.WordPieces.Add(new IdeaWordPiece { Text = rightLine.Text, IsHighlighted = false });
                         }
 
-                        hunk.RightLines.Add(rightLine);
+                        rawRightLines.Add(rightLine);
                     }
 
                     i++;
                 }
 
-                // Determine hunk type based on contents
-                if (hunk.LeftLines.Count == 0 && hunk.RightLines.Count > 0)
+                // Determine CLEAR, UNAMBIGUOUS hunk type
+                ChangeType overallType;
+                if (rawLeftLines.Count == 0 && rawRightLines.Count > 0)
                 {
-                    hunk.Type = ChangeType.Inserted;
-                    result.Additions += hunk.RightLines.Count;
+                    overallType = ChangeType.Inserted; // Pure addition (+): All Green
+                    result.Additions += rawRightLines.Count;
                 }
-                else if (hunk.LeftLines.Count > 0 && hunk.RightLines.Count == 0)
+                else if (rawLeftLines.Count > 0 && rawRightLines.Count == 0)
                 {
-                    hunk.Type = ChangeType.Deleted;
-                    result.Deletions += hunk.LeftLines.Count;
+                    overallType = ChangeType.Deleted; // Pure deletion (-): All Red
+                    result.Deletions += rawLeftLines.Count;
                 }
                 else
                 {
-                    hunk.Type = ChangeType.Modified;
-                    result.Modifications += Math.Max(hunk.LeftLines.Count, hunk.RightLines.Count);
+                    overallType = ChangeType.Modified; // Old replaced by New: All Blue!
+                    result.Modifications += Math.Max(rawLeftLines.Count, rawRightLines.Count);
                 }
+
+                // UNIFY every line's color to the hunk's overall type!
+                // This eliminates the confusing "zebra" alternating blue and green lines!
+                foreach (var line in rawLeftLines) line.Type = overallType;
+                foreach (var line in rawRightLines) line.Type = overallType;
+
+                var hunk = new IdeaDiffHunk
+                {
+                    HunkId = hunkId++,
+                    Type = overallType,
+                    LeftLines = new ObservableCollection<IdeaDiffLine>(rawLeftLines),
+                    RightLines = new ObservableCollection<IdeaDiffLine>(rawRightLines)
+                };
 
                 result.TotalDifferences++;
                 result.Hunks.Add(hunk);

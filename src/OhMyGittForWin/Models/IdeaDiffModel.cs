@@ -57,6 +57,22 @@ public partial class IdeaDiffHunk : ObservableObject
             return first == last ? $"{first}" : $"{first}-{last}";
         }
     }
+
+    public string TypeBadgeText => Type switch
+    {
+        ChangeType.Inserted => $"+{RightLineCount} 新增",
+        ChangeType.Deleted => $"-{LeftLineCount} 删除",
+        ChangeType.Modified => $"{LeftLineCount} ➔ {RightLineCount} 修改",
+        _ => ""
+    };
+
+    public string TypeBadgeBackground => Type switch
+    {
+        ChangeType.Inserted => "#166534",
+        ChangeType.Deleted => "#991B1B",
+        ChangeType.Modified => "#1E40AF",
+        _ => "Transparent"
+    };
 }
 
 public class IdeaFileDiffResult
