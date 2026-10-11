@@ -235,11 +235,7 @@
                                     BorderThickness="1" 
                                     CornerRadius="5" 
                                     Opacity="0"
-                                    Margin="-6,-4">
-                                <Border.Effect>
-                                    <DropShadowEffect BlurRadius="10" Direction="0" ShadowDepth="0" Opacity="0.35" Color="#3B82F6"/>
-                                </Border.Effect>
-                            </Border>
+                                    Margin="-6,-4"/>
                             <!-- Left Active Indicator Pill -->
                             <Border x:Name="ActiveIndicator"
                                     Width="3"

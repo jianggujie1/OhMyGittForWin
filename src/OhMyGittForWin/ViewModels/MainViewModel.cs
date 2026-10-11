@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -17,6 +18,9 @@ public partial class MainViewModel : ObservableObject
 {
     private readonly IGitService _gitService;
     private List<GitCommitItem> _allCommits = new();
+    private CancellationTokenSource? _commitSelectionCts;
+    private CancellationTokenSource? _diffFileSelectionCts;
+    private CancellationTokenSource? _filterCts;
 
     [ObservableProperty]
     private string _repoPath = string.Empty;
@@ -150,7 +154,40 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnFilterKeywordChanged(string value)
     {
-        ApplyCommitFilter();
+        _filterCts?.Cancel();
+        _filterCts?.Dispose();
+        var cts = new CancellationTokenSource();
+        _filterCts = cts;
+
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(120, cts.Token);
+            if (cts.Token.IsCancellationRequested) return;
+
+            var query = _allCommits.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                query = query.Where(c =>
+                    c.Message.Contains(value, StringComparison.OrdinalIgnoreCase) ||
+                    c.AuthorName.Contains(value, StringComparison.OrdinalIgnoreCase) ||
+                    c.ShortSha.Contains(value, StringComparison.OrdinalIgnoreCase));
+            }
+            var filtered = query.ToList();
+
+            if (cts.Token.IsCancellationRequested) return;
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                if (cts.Token.IsCancellationRequested) return;
+                FilteredCommits.Clear();
+                foreach (var c in filtered) FilteredCommits.Add(c);
+
+                if (FilteredCommits.Count > 0 && (SelectedCommit == null || !FilteredCommits.Contains(SelectedCommit)))
+                {
+                    SelectedCommit = FilteredCommits[0];
+                }
+            });
+        }, cts.Token);
     }
 
     private void ApplyCommitFilter()
@@ -178,52 +215,153 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSelectedCommitChanged(GitCommitItem? value)
     {
+        _commitSelectionCts?.Cancel();
+        _commitSelectionCts?.Dispose();
+        _commitSelectionCts = null;
+
+        _diffFileSelectionCts?.Cancel();
+        _diffFileSelectionCts?.Dispose();
+        _diffFileSelectionCts = null;
+
         CommitFiles.Clear();
         CurrentDiff = null;
+        CurrentIdeaDiff = null;
+        _selectedCommitFile = null;
+        OnPropertyChanged(nameof(SelectedCommitFile));
+
         if (value == null || string.IsNullOrWhiteSpace(RepoPath)) return;
 
-        try
-        {
-            var files = _gitService.GetChangedFilesForCommit(RepoPath, value.Sha);
-            foreach (var f in files) CommitFiles.Add(f);
+        var repoPath = RepoPath;
+        var sha = value.Sha;
+        var cts = new CancellationTokenSource();
+        _commitSelectionCts = cts;
 
-            if (CommitFiles.Count > 0)
-            {
-                SelectedCommitFile = CommitFiles[0];
-            }
-        }
-        catch (Exception ex)
+        _ = Task.Run(() =>
         {
-            StatusMessage = $"读取提交详情失败: {ex.Message}";
-        }
+            if (cts.Token.IsCancellationRequested) return;
+
+            try
+            {
+                var files = _gitService.GetChangedFilesForCommit(repoPath, sha);
+                if (cts.Token.IsCancellationRequested) return;
+
+                IdeaFileDiffResult? firstDiff = null;
+                string? firstFile = files.FirstOrDefault();
+                if (firstFile != null)
+                {
+                    firstDiff = _gitService.GetIdeaCommitFileDiff(repoPath, sha, firstFile);
+                }
+
+                if (cts.Token.IsCancellationRequested) return;
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (cts.Token.IsCancellationRequested) return;
+
+                    CommitFiles.Clear();
+                    foreach (var f in files) CommitFiles.Add(f);
+
+                    if (firstFile != null)
+                    {
+                        _selectedCommitFile = firstFile;
+                        OnPropertyChanged(nameof(SelectedCommitFile));
+                        CurrentIdeaDiff = firstDiff;
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                if (!cts.Token.IsCancellationRequested)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        StatusMessage = $"读取提交详情失败: {ex.Message}";
+                    });
+                }
+            }
+        }, cts.Token);
     }
 
     partial void OnSelectedCommitFileChanged(string? value)
     {
+        _diffFileSelectionCts?.Cancel();
+        _diffFileSelectionCts?.Dispose();
+        _diffFileSelectionCts = null;
+
         if (value == null || SelectedCommit == null || string.IsNullOrWhiteSpace(RepoPath)) return;
-        try
+
+        var repoPath = RepoPath;
+        var commitSha = SelectedCommit.Sha;
+        var filePath = value;
+        var cts = new CancellationTokenSource();
+        _diffFileSelectionCts = cts;
+
+        _ = Task.Run(() =>
         {
-            CurrentDiff = _gitService.GetCommitFileDiff(RepoPath, SelectedCommit.Sha, value);
-            CurrentIdeaDiff = _gitService.GetIdeaCommitFileDiff(RepoPath, SelectedCommit.Sha, value);
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"读取 Diff 失败: {ex.Message}";
-        }
+            if (cts.Token.IsCancellationRequested) return;
+            try
+            {
+                var ideaDiff = _gitService.GetIdeaCommitFileDiff(repoPath, commitSha, filePath);
+                if (cts.Token.IsCancellationRequested) return;
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (cts.Token.IsCancellationRequested) return;
+                    CurrentIdeaDiff = ideaDiff;
+                });
+            }
+            catch (Exception ex)
+            {
+                if (!cts.Token.IsCancellationRequested)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        StatusMessage = $"读取 Diff 失败: {ex.Message}";
+                    });
+                }
+            }
+        }, cts.Token);
     }
 
     partial void OnSelectedStatusFileChanged(GitStatusFileItem? value)
     {
+        _diffFileSelectionCts?.Cancel();
+        _diffFileSelectionCts?.Dispose();
+        _diffFileSelectionCts = null;
+
         if (value == null || string.IsNullOrWhiteSpace(RepoPath)) return;
-        try
+
+        var repoPath = RepoPath;
+        var filePath = value.FilePath;
+        var isStaged = value.IsStaged;
+        var cts = new CancellationTokenSource();
+        _diffFileSelectionCts = cts;
+
+        _ = Task.Run(() =>
         {
-            CurrentDiff = _gitService.GetFileDiff(RepoPath, value.FilePath, value.IsStaged);
-            CurrentIdeaDiff = _gitService.GetIdeaFileDiff(RepoPath, value.FilePath, value.IsStaged);
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"读取文件变更失败: {ex.Message}";
-        }
+            if (cts.Token.IsCancellationRequested) return;
+            try
+            {
+                var ideaDiff = _gitService.GetIdeaFileDiff(repoPath, filePath, isStaged);
+                if (cts.Token.IsCancellationRequested) return;
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (cts.Token.IsCancellationRequested) return;
+                    CurrentIdeaDiff = ideaDiff;
+                });
+            }
+            catch (Exception ex)
+            {
+                if (!cts.Token.IsCancellationRequested)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        StatusMessage = $"读取文件变更失败: {ex.Message}";
+                    });
+                }
+            }
+        }, cts.Token);
     }
 
     [RelayCommand]

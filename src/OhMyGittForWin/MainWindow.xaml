@@ -378,7 +378,12 @@
                                       Background="Transparent" Foreground="{StaticResource NeoTextPrimary}" 
                                       RowBackground="Transparent" AlternatingRowBackground="#1A1C23"
                                       GridLinesVisibility="None" BorderThickness="0"
-                                      HeadersVisibility="Column">
+                                      HeadersVisibility="Column"
+                                      EnableRowVirtualization="True"
+                                      VirtualizingPanel.IsVirtualizing="True"
+                                      VirtualizingPanel.VirtualizationMode="Recycling"
+                                      VirtualizingPanel.ScrollUnit="Pixel"
+                                      ScrollViewer.CanContentScroll="True">
                                 <DataGrid.ColumnHeaderStyle>
                                     <Style TargetType="DataGridColumnHeader">
                                         <Setter Property="Background" Value="Transparent"/>
@@ -422,51 +427,43 @@
                                         <Setter Property="Background" Value="Transparent"/>
                                         <Setter Property="BorderBrush" Value="Transparent"/>
                                         <Setter Property="BorderThickness" Value="0"/>
-                                        <Setter Property="Margin" Value="0,1.5"/>
+                                        <Setter Property="Margin" Value="0,1"/>
                                         <Setter Property="Cursor" Value="Hand"/>
                                         <Setter Property="SnapsToDevicePixels" Value="True"/>
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="DataGridRow">
                                                     <Border x:Name="OuterBorder" 
-                                                            CornerRadius="7" 
+                                                            CornerRadius="6" 
                                                             Margin="2,1"
                                                             BorderThickness="1"
                                                             BorderBrush="Transparent"
                                                             Background="Transparent"
-                                                            RenderTransformOrigin="0.5,0.5"
                                                             SnapsToDevicePixels="True">
-                                                        <Border.RenderTransform>
-                                                            <ScaleTransform x:Name="RowScale" ScaleX="1" ScaleY="1"/>
-                                                        </Border.RenderTransform>
                                                         <Grid>
                                                             <!-- Base Zebra Background Layer -->
                                                             <Border x:Name="BaseLayer"
-                                                                    CornerRadius="6"
+                                                                    CornerRadius="5"
                                                                     Background="{TemplateBinding Background}"
                                                                     SnapsToDevicePixels="True"/>
 
                                                             <!-- Hover Illumination Layer -->
                                                             <Border x:Name="HoverLayer" 
-                                                                    CornerRadius="6" 
+                                                                    CornerRadius="5" 
                                                                     Background="#22283A" 
-                                                                    BorderBrush="#333C52"
+                                                                    BorderBrush="#333D54"
                                                                     BorderThickness="1"
                                                                     Opacity="0"
                                                                     SnapsToDevicePixels="True"/>
 
                                                             <!-- Selected Active Card Layer -->
                                                             <Border x:Name="SelectedLayer" 
-                                                                    CornerRadius="6" 
-                                                                    Background="#263146" 
+                                                                    CornerRadius="5" 
+                                                                    Background="#252F43" 
                                                                     BorderBrush="#3B82F6" 
-                                                                    BorderThickness="1" 
+                                                                    BorderThickness="1.2" 
                                                                     Opacity="0"
-                                                                    SnapsToDevicePixels="True">
-                                                                <Border.Effect>
-                                                                    <DropShadowEffect BlurRadius="12" Direction="0" ShadowDepth="0" Opacity="0.4" Color="#3B82F6"/>
-                                                                </Border.Effect>
-                                                            </Border>
+                                                                    SnapsToDevicePixels="True"/>
 
                                                             <!-- Left Neon Pill Indicator -->
                                                             <Border x:Name="ActivePill" 
@@ -475,13 +472,9 @@
                                                                     CornerRadius="1.75" 
                                                                     HorizontalAlignment="Left" 
                                                                     VerticalAlignment="Center" 
-                                                                    Margin="4,0,0,0" 
+                                                                    Margin="3,0,0,0" 
                                                                     Background="#38BDF8" 
-                                                                    Opacity="0">
-                                                                <Border.Effect>
-                                                                    <DropShadowEffect BlurRadius="8" Direction="0" ShadowDepth="0" Opacity="0.85" Color="#38BDF8"/>
-                                                                </Border.Effect>
-                                                            </Border>
+                                                                    Opacity="0"/>
 
                                                             <!-- Cells Presenter -->
                                                             <DataGridCellsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
@@ -490,87 +483,20 @@
                                                         </Grid>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
-                                                        <!-- Hover Animation -->
+                                                        <!-- Direct hardware-accelerated triggers for maximum fluidity -->
                                                         <MultiTrigger>
                                                             <MultiTrigger.Conditions>
                                                                 <Condition Property="IsMouseOver" Value="True"/>
                                                                 <Condition Property="IsSelected" Value="False"/>
                                                             </MultiTrigger.Conditions>
-                                                            <MultiTrigger.EnterActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="HoverLayer" Storyboard.TargetProperty="Opacity" To="0.85" Duration="0:0:0.12"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </MultiTrigger.EnterActions>
-                                                            <MultiTrigger.ExitActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="HoverLayer" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.15"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </MultiTrigger.ExitActions>
+                                                            <Setter TargetName="HoverLayer" Property="Opacity" Value="0.9"/>
                                                         </MultiTrigger>
 
-                                                        <!-- Selected Animation -->
                                                         <Trigger Property="IsSelected" Value="True">
-                                                            <Trigger.EnterActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="SelectedLayer" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.14"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="ActivePill" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.14"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="ActivePill" Storyboard.TargetProperty="Height" From="6" To="18" Duration="0:0:0.18">
-                                                                            <DoubleAnimation.EasingFunction>
-                                                                                <CubicEase EasingMode="EaseOut"/>
-                                                                            </DoubleAnimation.EasingFunction>
-                                                                        </DoubleAnimation>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.EnterActions>
-                                                            <Trigger.ExitActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="SelectedLayer" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.12"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="ActivePill" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.12"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.ExitActions>
+                                                            <Setter TargetName="SelectedLayer" Property="Opacity" Value="1"/>
+                                                            <Setter TargetName="ActivePill" Property="Opacity" Value="1"/>
                                                             <Setter Property="Foreground" Value="#FFFFFF"/>
                                                         </Trigger>
-
-                                                        <!-- Press/Click Animation -->
-                                                        <EventTrigger RoutedEvent="UIElement.PreviewMouseDown">
-                                                            <BeginStoryboard>
-                                                                <Storyboard>
-                                                                    <DoubleAnimation Storyboard.TargetName="RowScale" Storyboard.TargetProperty="ScaleX" To="0.988" Duration="0:0:0.05"/>
-                                                                    <DoubleAnimation Storyboard.TargetName="RowScale" Storyboard.TargetProperty="ScaleY" To="0.988" Duration="0:0:0.05"/>
-                                                                </Storyboard>
-                                                            </BeginStoryboard>
-                                                        </EventTrigger>
-                                                        <EventTrigger RoutedEvent="UIElement.PreviewMouseUp">
-                                                            <BeginStoryboard>
-                                                                <Storyboard>
-                                                                    <DoubleAnimation Storyboard.TargetName="RowScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.12">
-                                                                        <DoubleAnimation.EasingFunction>
-                                                                            <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
-                                                                        </DoubleAnimation.EasingFunction>
-                                                                    </DoubleAnimation>
-                                                                    <DoubleAnimation Storyboard.TargetName="RowScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.12">
-                                                                        <DoubleAnimation.EasingFunction>
-                                                                            <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
-                                                                        </DoubleAnimation.EasingFunction>
-                                                                    </DoubleAnimation>
-                                                                </Storyboard>
-                                                            </BeginStoryboard>
-                                                        </EventTrigger>
-                                                        <EventTrigger RoutedEvent="UIElement.MouseLeave">
-                                                            <BeginStoryboard>
-                                                                <Storyboard>
-                                                                    <DoubleAnimation Storyboard.TargetName="RowScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.1"/>
-                                                                    <DoubleAnimation Storyboard.TargetName="RowScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.1"/>
-                                                                </Storyboard>
-                                                            </BeginStoryboard>
-                                                        </EventTrigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Setter.Value>
@@ -594,11 +520,6 @@
                                                                             <Trigger Property="IsMouseOver" Value="True">
                                                                                 <Setter Property="Background" Value="#2563EB"/>
                                                                                 <Setter Property="BorderBrush" Value="#60A5FA"/>
-                                                                                <Setter Property="Effect">
-                                                                                    <Setter.Value>
-                                                                                        <DropShadowEffect BlurRadius="8" Direction="0" ShadowDepth="0" Opacity="0.6" Color="#3B82F6"/>
-                                                                                    </Setter.Value>
-                                                                                </Setter>
                                                                             </Trigger>
                                                                         </Style.Triggers>
                                                                     </Style>
