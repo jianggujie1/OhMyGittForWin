@@ -323,6 +323,66 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public async Task PushAsync()
+    {
+        if (string.IsNullOrWhiteSpace(RepoPath) || !_gitService.IsGitRepository(RepoPath))
+        {
+            MessageBox.Show("请先打开一个 Git 仓库！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var remotes = _gitService.GetRemotes(RepoPath);
+        if (remotes.Count == 0)
+        {
+            var res = MessageBox.Show("当前仓库尚未配置远程源！\n\n是否立即打开【远程管理】进行配置？", "未配置远程仓库", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (res == MessageBoxResult.Yes)
+            {
+                ManageRemotes();
+            }
+            return;
+        }
+
+        string remoteName = remotes.FirstOrDefault(r => r.Name == "origin")?.Name ?? remotes[0].Name;
+
+        IsLoading = true;
+        StatusMessage = $"正在推送分支 [{CurrentBranch}] 到远程 [{remoteName}]...";
+
+        try
+        {
+            var (success, output) = await _gitService.PushBranchAsync(RepoPath, remoteName, CurrentBranch, true);
+            if (success)
+            {
+                await _gitService.FetchAsync(RepoPath, remoteName);
+                StatusMessage = $"🎉 成功推送到远程分支 {remoteName}/{CurrentBranch}！";
+                MessageBox.Show($"推送成功！\n\n远程分支: {remoteName}/{CurrentBranch}\n\n输出详情:\n{output}", "推送成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                await RefreshRepositoryAsync();
+            }
+            else
+            {
+                StatusMessage = $"推送失败: {output}";
+                string tip = "";
+                if (output.Contains("Authentication failed", StringComparison.OrdinalIgnoreCase) ||
+                    output.Contains("fatal: could not read Username", StringComparison.OrdinalIgnoreCase) ||
+                    output.Contains("Support for password authentication was removed", StringComparison.OrdinalIgnoreCase) ||
+                    output.Contains("Permission to", StringComparison.OrdinalIgnoreCase))
+                {
+                    tip = "\n\n💡 身份验证提示：\nGitHub 已于 2021 年停用账号密码推送。\n请点击顶部【🌐 远程管理】->【🔑 绑定 Token】，一键绑定你的 GitHub Personal Access Token (以 ghp_ 开头) 即可直接成功推送！";
+                }
+
+                MessageBox.Show($"推送失败，详情如下：\n\n{output}{tip}", "推送失败", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"推送发生异常: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
     public void ManageRemotes()
     {
         if (string.IsNullOrWhiteSpace(RepoPath) || !_gitService.IsGitRepository(RepoPath))

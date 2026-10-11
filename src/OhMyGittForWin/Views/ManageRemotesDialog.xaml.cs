@@ -42,6 +42,7 @@ public partial class ManageRemotesDialog : Window
             else
             {
                 TxtStatus.Text = "当前仓库尚未配置远程源。请输入名称和 URL 点击添加。";
+                BtnBindToken.IsEnabled = false;
                 BtnFetch.IsEnabled = false;
                 BtnPush.IsEnabled = false;
                 BtnDeleteRemote.IsEnabled = false;
@@ -56,6 +57,7 @@ public partial class ManageRemotesDialog : Window
     private void RemotesListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         bool hasSelection = RemotesListBox.SelectedItem is GitRemoteItem;
+        BtnBindToken.IsEnabled = hasSelection;
         BtnFetch.IsEnabled = hasSelection;
         BtnPush.IsEnabled = hasSelection;
         BtnDeleteRemote.IsEnabled = hasSelection;
@@ -142,12 +144,12 @@ public partial class ManageRemotesDialog : Window
         TxtStatus.Text = $"正在推送分支 [{localBranch}] 到远程源 [{selected.Name}/{remoteBranch}]...";
         BtnPush.IsEnabled = false;
 
-        var (success, output) = await Task.Run(() => _gitService.PushBranch(_repoPath, selected.Name, refspec, true));
+        var (success, output) = await _gitService.PushBranchAsync(_repoPath, selected.Name, refspec, true);
 
         if (success)
         {
             // Auto fetch to sync remote branch refs
-            await Task.Run(() => _gitService.Fetch(_repoPath, selected.Name));
+            await _gitService.FetchAsync(_repoPath, selected.Name);
             BtnPush.IsEnabled = true;
             HasChanges = true;
             TxtStatus.Text = $"🎉 成功创建/推送到远程分支 {selected.Name}/{remoteBranch}！";
@@ -157,7 +159,66 @@ public partial class ManageRemotesDialog : Window
         {
             BtnPush.IsEnabled = true;
             TxtStatus.Text = $"推送失败: {output}";
-            MessageBox.Show($"推送失败，详情如下：\n\n{output}", "推送失败", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+            string tip = "";
+            if (output.Contains("Authentication failed", StringComparison.OrdinalIgnoreCase) ||
+                output.Contains("fatal: could not read Username", StringComparison.OrdinalIgnoreCase) ||
+                output.Contains("Support for password authentication was removed", StringComparison.OrdinalIgnoreCase) ||
+                output.Contains("Permission to", StringComparison.OrdinalIgnoreCase))
+            {
+                tip = "\n\n💡 提示：GitHub 已停用密码认证。请点击【🔑 绑定 Token】绑定 Personal Access Token (以 ghp_ 开头) 即可直接推送成功！";
+            }
+
+            MessageBox.Show($"推送失败，详情如下：\n\n{output}{tip}", "推送失败", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void BtnBindToken_Click(object sender, RoutedEventArgs e)
+    {
+        if (RemotesListBox.SelectedItem is not GitRemoteItem selected) return;
+
+        var tokenDlg = new BindTokenDialog(selected.Name, selected.Url)
+        {
+            Owner = this
+        };
+
+        if (tokenDlg.ShowDialog() == true && !string.IsNullOrWhiteSpace(tokenDlg.Token))
+        {
+            string token = tokenDlg.Token.Trim();
+            string url = selected.Url;
+            string newUrl;
+
+            if (url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                int atIndex = url.IndexOf('@');
+                if (atIndex > 0)
+                {
+                    string rest = url.Substring(atIndex + 1);
+                    newUrl = $"https://{token}@{rest}";
+                }
+                else
+                {
+                    string rest = url.Substring("https://".Length);
+                    newUrl = $"https://{token}@{rest}";
+                }
+            }
+            else
+            {
+                newUrl = url;
+            }
+
+            try
+            {
+                _gitService.SetRemoteUrl(_repoPath, selected.Name, newUrl);
+                TxtStatus.Text = $"已为远程源 [{selected.Name}] 成功绑定 Token！现在可直接推送。";
+                HasChanges = true;
+                LoadRemotes();
+                MessageBox.Show($"Token 绑定成功！\n现在你可以点击【🚀 推送并创建远程分支】直接推送到 GitHub，无需再输入密码。", "绑定成功", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"更新远程地址失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 
@@ -168,7 +229,7 @@ public partial class ManageRemotesDialog : Window
         TxtStatus.Text = $"正在从 [{selected.Name}] 拉取远程分支...";
         BtnFetch.IsEnabled = false;
 
-        var (success, output) = await Task.Run(() => _gitService.Fetch(_repoPath, selected.Name));
+        var (success, output) = await _gitService.FetchAsync(_repoPath, selected.Name);
 
         BtnFetch.IsEnabled = true;
         HasChanges = true;

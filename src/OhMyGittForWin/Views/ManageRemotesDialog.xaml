@@ -109,6 +109,9 @@
                                 Style="{StaticResource NeoButton}" Foreground="#EF4444" IsEnabled="False"/>
 
                         <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                            <Button x:Name="BtnBindToken" Content="🔑 绑定 Token" Click="BtnBindToken_Click"
+                                    Style="{StaticResource NeoButton}" Margin="0,0,8,0" IsEnabled="False"
+                                    ToolTip="为当前选中的远程仓库配置 GitHub Personal Access Token"/>
                             <Button x:Name="BtnFetch" Content="⬇ 拉取分支 (Fetch)" Click="BtnFetch_Click"
                                     Style="{StaticResource NeoButton}" Margin="0,0,8,0" IsEnabled="False"/>
                             <Button x:Name="BtnPush" Content="🚀 推送并创建远程分支 (Push -u)" Click="BtnPush_Click"

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using OhMyGittForWin.Models;
 
 namespace OhMyGittForWin.Services;
@@ -26,10 +27,13 @@ public interface IGitService
     List<GitRemoteItem> GetRemotes(string repoPath);
     void AddRemote(string repoPath, string name, string url);
     void RemoveRemote(string repoPath, string name);
+    void SetRemoteUrl(string repoPath, string name, string newUrl);
     void CreateBranch(string repoPath, string branchName, string? targetSha = null);
     void CheckoutBranch(string repoPath, string branchName);
     void DeleteBranch(string repoPath, string branchName);
     (bool Success, string Output) PushBranch(string repoPath, string remoteName, string branchName, bool setUpstream = true);
+    Task<(bool Success, string Output)> PushBranchAsync(string repoPath, string remoteName, string branchName, bool setUpstream = true);
     (bool Success, string Output) Fetch(string repoPath, string remoteName = "origin");
+    Task<(bool Success, string Output)> FetchAsync(string repoPath, string remoteName = "origin");
     (bool Success, string Output) DeleteRemoteBranch(string repoPath, string remoteName, string branchName);
 }

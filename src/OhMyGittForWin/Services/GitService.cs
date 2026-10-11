@@ -359,7 +359,7 @@ public class GitService : IGitService
         return "git";
     }
 
-    private static (bool Success, string Output) RunGitCommand(string repoPath, string arguments)
+    private static async Task<(bool Success, string Output)> RunGitCommandAsync(string repoPath, string arguments, int timeoutMs = 60000)
     {
         try
         {
@@ -373,18 +373,55 @@ public class GitService : IGitService
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-            using var process = System.Diagnostics.Process.Start(psi);
-            if (process == null) return (false, "无法启动 git 进程");
-            string stdout = process.StandardOutput.ReadToEnd();
-            string stderr = process.StandardError.ReadToEnd();
-            process.WaitForExit(30000);
+
+            // Allow Git Credential Manager to pop up UI / browser login if needed
+            psi.EnvironmentVariables["GCM_INTERACTIVE"] = "always";
+
+            using var process = new System.Diagnostics.Process { StartInfo = psi };
+            var outputBuilder = new System.Text.StringBuilder();
+            var errorBuilder = new System.Text.StringBuilder();
+
+            process.OutputDataReceived += (s, e) => { if (e.Data != null) outputBuilder.AppendLine(e.Data); };
+            process.ErrorDataReceived += (s, e) => { if (e.Data != null) errorBuilder.AppendLine(e.Data); };
+
+            if (!process.Start())
+            {
+                return (false, "无法启动 git 进程");
+            }
+
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            using var cts = new System.Threading.CancellationTokenSource(timeoutMs);
+            try
+            {
+                await process.WaitForExitAsync(cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                try { process.Kill(true); } catch { }
+                return (false, "执行超时 (超过 60 秒)。如果正在等待身份验证弹窗，请直接在终端运行一次 git push 完成登录，或使用【绑定 Token】。");
+            }
+
+            string stdout = outputBuilder.ToString().Trim();
+            string stderr = errorBuilder.ToString().Trim();
             string output = string.IsNullOrWhiteSpace(stdout) ? stderr : stdout;
-            return (process.ExitCode == 0, output.Trim());
+            if (!string.IsNullOrWhiteSpace(stderr) && !output.Contains(stderr))
+            {
+                output = $"{output}\n{stderr}".Trim();
+            }
+
+            return (process.ExitCode == 0, output);
         }
         catch (Exception ex)
         {
             return (false, ex.Message);
         }
+    }
+
+    private static (bool Success, string Output) RunGitCommand(string repoPath, string arguments, int timeoutMs = 60000)
+    {
+        return RunGitCommandAsync(repoPath, arguments, timeoutMs).GetAwaiter().GetResult();
     }
 
     public List<GitRemoteItem> GetRemotes(string repoPath)
@@ -403,6 +440,11 @@ public class GitService : IGitService
     {
         using var repo = new Repository(repoPath);
         repo.Network.Remotes.Remove(name);
+    }
+
+    public void SetRemoteUrl(string repoPath, string name, string newUrl)
+    {
+        RunGitCommand(repoPath, $"remote set-url {name} \"{newUrl}\"");
     }
 
     public void CreateBranch(string repoPath, string branchName, string? targetSha = null)
@@ -454,13 +496,23 @@ public class GitService : IGitService
 
     public (bool Success, string Output) PushBranch(string repoPath, string remoteName, string branchName, bool setUpstream = true)
     {
+        return PushBranchAsync(repoPath, remoteName, branchName, setUpstream).GetAwaiter().GetResult();
+    }
+
+    public Task<(bool Success, string Output)> PushBranchAsync(string repoPath, string remoteName, string branchName, bool setUpstream = true)
+    {
         string args = setUpstream ? $"push -u {remoteName} {branchName}" : $"push {remoteName} {branchName}";
-        return RunGitCommand(repoPath, args);
+        return RunGitCommandAsync(repoPath, args, 120000);
     }
 
     public (bool Success, string Output) Fetch(string repoPath, string remoteName = "origin")
     {
-        return RunGitCommand(repoPath, $"fetch {remoteName} --prune");
+        return FetchAsync(repoPath, remoteName).GetAwaiter().GetResult();
+    }
+
+    public Task<(bool Success, string Output)> FetchAsync(string repoPath, string remoteName = "origin")
+    {
+        return RunGitCommandAsync(repoPath, $"fetch {remoteName} --prune", 60000);
     }
 
     public (bool Success, string Output) DeleteRemoteBranch(string repoPath, string remoteName, string branchName)

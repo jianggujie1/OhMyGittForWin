@@ -37,7 +37,9 @@
                             Style="{StaticResource NeoButton}" Margin="0,0,8,0"/>
                     <Button Content="🔄 刷新" Command="{Binding RefreshRepositoryCommand}"
                             Style="{StaticResource NeoButton}" Margin="0,0,8,0"/>
-                    <Button Content="🌐 远程与推送" Command="{Binding ManageRemotesCommand}"
+                    <Button Content="⬆ 推送 (Push)" Command="{Binding PushCommand}"
+                            Style="{StaticResource NeoPrimaryButton}" Margin="0,0,8,0"/>
+                    <Button Content="🌐 远程管理" Command="{Binding ManageRemotesCommand}"
                             Style="{StaticResource NeoButton}" Margin="0,0,10,0"/>
                     <Button Content="⚡ 3-Way 冲突解决器" Click="OpenConflictResolver_Click"
                             Style="{StaticResource NeoAccentBlueButton}"/>
