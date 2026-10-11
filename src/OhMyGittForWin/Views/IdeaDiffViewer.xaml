@@ -94,8 +94,8 @@
                 <Grid.ColumnDefinitions>
                     <!-- Left file header -->
                     <ColumnDefinition Width="*"/>
-                    <!-- Middle spacer -->
-                    <ColumnDefinition Width="130"/>
+                    <!-- Middle spacer matching gutter width -->
+                    <ColumnDefinition Width="124"/>
                     <!-- Right file header -->
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
@@ -123,106 +123,159 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <!-- A Single Diff Hunk Block with Left lines, Middle Ribbon Gutter, Right lines -->
-                        <Grid Margin="0,0,0,0">
+                        <Grid Margin="0,0,0,0" ClipToBounds="True">
                             <Grid.ColumnDefinitions>
                                 <!-- Column 0: Left Code Lines -->
                                 <ColumnDefinition Width="*" MinWidth="300"/>
                                 <!-- Column 1: Middle Connecting Gutter (Line Numbers + Ribbons + Actions) -->
-                                <ColumnDefinition Width="130" MinWidth="130" MaxWidth="130"/>
+                                <ColumnDefinition Width="124" MinWidth="124" MaxWidth="124"/>
                                 <!-- Column 2: Right Code Lines -->
                                 <ColumnDefinition Width="*" MinWidth="300"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Column 0: Left Code Lines -->
-                            <Border Grid.Column="0" 
-                                    Background="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=Background}"
-                                    BorderBrush="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=GutterBorder}"
-                                    BorderThickness="0,0,1,0">
-                                <ItemsControl ItemsSource="{Binding LeftLines}">
+                            <!-- Column 0: Left Code Lines (Only colored when lines exist) -->
+                            <Border Grid.Column="0" Background="#1E1F22" BorderBrush="#2F333D" BorderThickness="0,0,1,0" ClipToBounds="True">
+                                <Grid>
+                                    <!-- When Left has lines: render lines with type background -->
+                                    <ItemsControl ItemsSource="{Binding LeftLines}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Height="22" 
+                                                        Background="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=Background}"
+                                                        BorderBrush="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=GutterBorder}"
+                                                        BorderThickness="0,0,0,0"
+                                                        Padding="8,1,4,1">
+                                                    <ItemsControl ItemsSource="{Binding WordPieces}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <VirtualizingStackPanel Orientation="Horizontal"/>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding Text}" Style="{StaticResource WordPieceStyle}"/>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- When Left has 0 lines (pure insertion): show subtle top insertion anchor notch -->
+                                    <Border Height="2" Background="#4E9F5D" VerticalAlignment="Top" HorizontalAlignment="Stretch"
+                                            Visibility="{Binding LeftLines.Count, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding LeftLineCount}" Value="0">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <!-- Column 1: Middle Gutter (Left Line Numbers | Connecting Ribbon | Right Line Numbers) -->
+                            <Grid Grid.Column="1" Background="#26282E" ClipToBounds="True">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="38"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="38"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Left Line Numbers (Line by line) -->
+                                <ItemsControl Grid.Column="0" ItemsSource="{Binding LeftLines}" VerticalAlignment="Top">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Height="22" Padding="8,1,4,1">
-                                                <ItemsControl ItemsSource="{Binding WordPieces}">
-                                                    <ItemsControl.ItemsPanel>
-                                                        <ItemsPanelTemplate>
-                                                            <VirtualizingStackPanel Orientation="Horizontal"/>
-                                                        </ItemsPanelTemplate>
-                                                    </ItemsControl.ItemsPanel>
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <TextBlock Text="{Binding Text}" Style="{StaticResource WordPieceStyle}"/>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
+                                            <Border Height="22" Padding="0,0,4,0">
+                                                <TextBlock Text="{Binding LineNumber}" Foreground="#7F848E" FontSize="11" 
+                                                           FontFamily="JetBrains Mono, Consolas" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                            </Border>
 
-                            <!-- Column 1: Middle Gutter (IDEA Linking Ribbons + Chevrons + Checkboxes) -->
-                            <Grid Grid.Column="1" Background="#26282E">
-                                <!-- The Smooth Bezier Connecting Ribbon (Fills the gap between left height & right height) -->
-                                <ctrl:HunkRibbonConnector 
-                                    HunkType="{Binding Type}"
-                                    LeftLineCount="{Binding LeftLineCount}"
-                                    RightLineCount="{Binding RightLineCount}"
-                                    LineHeight="22"
-                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                                <!-- Middle Track: Ribbon and Floating Actions -->
+                                <Grid Grid.Column="1" ClipToBounds="True">
+                                    <!-- The Bezier Connecting Ribbon -->
+                                    <ctrl:HunkRibbonConnector 
+                                        HunkType="{Binding Type}"
+                                        LeftLineCount="{Binding LeftLineCount}"
+                                        RightLineCount="{Binding RightLineCount}"
+                                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
 
-                                <!-- Inner Gutter Overlay: Left line numbers, chevron, right line numbers, checkbox -->
-                                <DockPanel LastChildFill="True" Margin="4,0">
-                                    <!-- Left Line Number & Action Chevron -->
-                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Top" Height="22">
-                                        <!-- >> Revert/Apply Action Button in Gutter -->
-                                        <Button Content="»" Width="16" Height="18" Padding="0" Margin="0,0,4,0"
+                                    <!-- Action Chevron » and Checkbox [ ] in the Center -->
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Height="22">
+                                        <Button Content="»" Width="14" Height="16" Padding="0" Margin="0,0,2,0"
                                                 Background="Transparent" BorderThickness="0" Foreground="#61AFEF" FontWeight="Bold" FontSize="11"
                                                 Cursor="Hand" ToolTip="Revert / Apply change"
                                                 Visibility="{Binding HasDifferences, Converter={StaticResource BoolToVis}}"/>
 
-                                        <!-- Left Line Number(s) -->
-                                        <TextBlock Text="{Binding LeftLineRangeDisplay}" Foreground="#7F848E" FontSize="11" 
-                                                   FontFamily="JetBrains Mono, Consolas" VerticalAlignment="Center" Width="36" TextAlignment="Right"/>
-                                    </StackPanel>
-
-                                    <!-- Right Line Number & Checkbox -->
-                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Top" Height="22">
-                                        <!-- Right Line Number(s) -->
-                                        <TextBlock Text="{Binding RightLineRangeDisplay}" Foreground="#7F848E" FontSize="11" 
-                                                   FontFamily="JetBrains Mono, Consolas" VerticalAlignment="Center" Width="36" TextAlignment="Left" Margin="4,0,4,0"/>
-
-                                        <!-- [ ] Checkbox to selectively include/stage hunk -->
                                         <CheckBox IsChecked="{Binding IsIncluded}" VerticalAlignment="Center"
                                                   Visibility="{Binding HasDifferences, Converter={StaticResource BoolToVis}}"/>
                                     </StackPanel>
-                                </DockPanel>
-                            </Grid>
+                                </Grid>
 
-                            <!-- Column 2: Right Code Lines -->
-                            <Border Grid.Column="2" 
-                                    Background="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=Background}"
-                                    BorderBrush="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=GutterBorder}"
-                                    BorderThickness="1,0,0,0">
-                                <ItemsControl ItemsSource="{Binding RightLines}">
+                                <!-- Right Line Numbers (Line by line) -->
+                                <ItemsControl Grid.Column="2" ItemsSource="{Binding RightLines}" VerticalAlignment="Top">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Height="22" Padding="8,1,4,1">
-                                                <ItemsControl ItemsSource="{Binding WordPieces}">
-                                                    <ItemsControl.ItemsPanel>
-                                                        <ItemsPanelTemplate>
-                                                            <VirtualizingStackPanel Orientation="Horizontal"/>
-                                                        </ItemsPanelTemplate>
-                                                    </ItemsControl.ItemsPanel>
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <TextBlock Text="{Binding Text}" Style="{StaticResource WordPieceStyle}"/>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
+                                            <Border Height="22" Padding="4,0,0,0">
+                                                <TextBlock Text="{Binding LineNumber}" Foreground="#7F848E" FontSize="11" 
+                                                           FontFamily="JetBrains Mono, Consolas" VerticalAlignment="Center" HorizontalAlignment="Left"/>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+                            </Grid>
+
+                            <!-- Column 2: Right Code Lines (Only colored when lines exist) -->
+                            <Border Grid.Column="2" Background="#1E1F22" BorderBrush="#2F333D" BorderThickness="1,0,0,0" ClipToBounds="True">
+                                <Grid>
+                                    <!-- When Right has lines: render lines with type background -->
+                                    <ItemsControl ItemsSource="{Binding RightLines}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Height="22" 
+                                                        Background="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=Background}"
+                                                        BorderBrush="{Binding Type, Converter={StaticResource DiffColorConv}, ConverterParameter=GutterBorder}"
+                                                        BorderThickness="0,0,0,0"
+                                                        Padding="8,1,4,1">
+                                                    <ItemsControl ItemsSource="{Binding WordPieces}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <VirtualizingStackPanel Orientation="Horizontal"/>
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding Text}" Style="{StaticResource WordPieceStyle}"/>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- When Right has 0 lines (pure deletion): show subtle top deletion anchor notch -->
+                                    <Border Height="2" Background="#9E555C" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding RightLineCount}" Value="0">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                    </Border>
+                                </Grid>
                             </Border>
                         </Grid>
                     </DataTemplate>
