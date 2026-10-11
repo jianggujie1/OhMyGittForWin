@@ -14,7 +14,7 @@
         Background="{StaticResource NeoBgBrush}">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="38"
+        <WindowChrome CaptionHeight="50"
                       ResizeBorderThickness="6"
                       CornerRadius="0"
                       GlassFrameThickness="0"
@@ -32,38 +32,34 @@
 
     <Grid x:Name="RootContainer" Background="{StaticResource NeoBgBrush}">
         <Grid.RowDefinitions>
-            <!-- 0. Dark Neomorphic Title Bar -->
-            <RowDefinition Height="38"/>
+            <!-- 0. Unified Top Bar (Title + Actions) -->
+            <RowDefinition Height="50"/>
             <!-- 1. Workspace Content -->
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- 0. Integrated Custom Dark Title Bar -->
-        <Border Grid.Row="0" Background="#16181F" BorderBrush="#252A36" BorderThickness="0,0,0,1">
-            <Grid>
-                <!-- Left: App Brand & Window Info -->
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
-                    <Border Background="{StaticResource NeoOrangeGradient}" CornerRadius="6" Width="20" Height="20" Margin="0,0,8,0">
-                        <TextBlock Text="Ω" Foreground="White" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <TextBlock Text="OhMyGit" Foreground="{StaticResource NeoTextPrimary}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <TextBlock Text="|" Foreground="#3E4452" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <TextBlock Text="📁 " FontSize="11" VerticalAlignment="Center"/>
-                    <TextBlock Text="{Binding RepoName}" Foreground="{StaticResource NeoTextSecondary}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock Text="•" Foreground="#4B5563" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <Ellipse Width="6" Height="6" Fill="#10B981" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                    <TextBlock Text="{Binding CurrentBranch}" Foreground="#10B981" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
-                </StackPanel>
-
-                <!-- Center: Window Caption (Centered, Non-interactive so dragging works anywhere) -->
-                <TextBlock Text="OhMyGit - Neomorphic Git Engine" Foreground="#475569" FontSize="11" 
-                           HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
-
-                <!-- Right: Custom Window Control Buttons -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Stretch"
+        <!-- 0. Unified Pro Header Bar (Zero Redundancy!) -->
+        <Border Grid.Row="0" Background="#151820" BorderBrush="#232834" BorderThickness="0,0,0,1">
+            <DockPanel LastChildFill="True">
+                <!-- Right: Action Buttons + Window Controls -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center"
                             WindowChrome.IsHitTestVisibleInChrome="True">
-                    <!-- Minimize -->
-                    <Button x:Name="BtnMinimize" Click="BtnMinimize_Click" Width="44" Height="38" 
+                    <Button Content="📂 打开仓库" Command="{Binding OpenRepositoryCommand}"
+                            Style="{StaticResource NeoButton}" Height="32" Padding="10,0" Margin="0,0,6,0"/>
+                    <Button Content="🔄 刷新" Command="{Binding RefreshRepositoryCommand}"
+                            Style="{StaticResource NeoButton}" Height="32" Padding="10,0" Margin="0,0,6,0"/>
+                    <Button Content="⬆ 推送 (Push)" Command="{Binding PushCommand}"
+                            Style="{StaticResource NeoPrimaryButton}" Height="32" Padding="12,0" Margin="0,0,6,0"/>
+                    <Button Content="🌐 远程管理" Command="{Binding ManageRemotesCommand}"
+                            Style="{StaticResource NeoButton}" Height="32" Padding="10,0" Margin="0,0,8,0"/>
+                    <Button Content="⚡ 3-Way 冲突解决器" Click="OpenConflictResolver_Click"
+                            Style="{StaticResource NeoAccentBlueButton}" Height="32" Padding="12,0" Margin="0,0,12,0"/>
+
+                    <!-- Subtle Separator -->
+                    <Rectangle Width="1" Height="22" Fill="#282E3B" Margin="0,0,6,0" VerticalAlignment="Center"/>
+
+                    <!-- Window Control Buttons -->
+                    <Button x:Name="BtnMinimize" Click="BtnMinimize_Click" Width="44" Height="50" 
                             Background="Transparent" BorderThickness="0" Foreground="{StaticResource NeoTextMuted}"
                             FontSize="13" Content="─" ToolTip="最小化">
                         <Button.Style>
@@ -87,8 +83,7 @@
                         </Button.Style>
                     </Button>
 
-                    <!-- Maximize / Restore -->
-                    <Button x:Name="BtnMaximize" Click="BtnMaximize_Click" Width="44" Height="38" 
+                    <Button x:Name="BtnMaximize" Click="BtnMaximize_Click" Width="44" Height="50" 
                             Background="Transparent" BorderThickness="0" Foreground="{StaticResource NeoTextMuted}"
                             FontSize="12" Content="□" ToolTip="最大化 / 还原">
                         <Button.Style>
@@ -112,8 +107,7 @@
                         </Button.Style>
                     </Button>
 
-                    <!-- Close -->
-                    <Button x:Name="BtnClose" Click="BtnClose_Click" Width="48" Height="38" 
+                    <Button x:Name="BtnClose" Click="BtnClose_Click" Width="48" Height="50" 
                             Background="Transparent" BorderThickness="0" Foreground="{StaticResource NeoTextMuted}"
                             FontSize="13" Content="✕" ToolTip="关闭">
                         <Button.Style>
@@ -137,62 +131,36 @@
                         </Button.Style>
                     </Button>
                 </StackPanel>
-            </Grid>
-        </Border>
 
-        <!-- 1. Workspace Content -->
-        <Grid Grid.Row="1" Margin="16,12,16,16">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-
-        <!-- TOP BAR: Floating Neomorphic Header Island -->
-        <Border Grid.Row="0" Style="{StaticResource NeoCard}" Padding="16,12" Margin="0,0,0,16">
-            <DockPanel LastChildFill="True">
-                <!-- Action Buttons on Right -->
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
-                    <Button Content="📂 打开仓库" Command="{Binding OpenRepositoryCommand}"
-                            Style="{StaticResource NeoButton}" Margin="0,0,8,0"/>
-                    <Button Content="🔄 刷新" Command="{Binding RefreshRepositoryCommand}"
-                            Style="{StaticResource NeoButton}" Margin="0,0,8,0"/>
-                    <Button Content="⬆ 推送 (Push)" Command="{Binding PushCommand}"
-                            Style="{StaticResource NeoPrimaryButton}" Margin="0,0,8,0"/>
-                    <Button Content="🌐 远程管理" Command="{Binding ManageRemotesCommand}"
-                            Style="{StaticResource NeoButton}" Margin="0,0,10,0"/>
-                    <Button Content="⚡ 3-Way 冲突解决器" Click="OpenConflictResolver_Click"
-                            Style="{StaticResource NeoAccentBlueButton}"/>
-                </StackPanel>
-
-                <!-- Brand & Status Pill on Left -->
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- Left: App Brand & Status Pills -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
                     <!-- Brand Icon with Warm Orange Glow -->
-                    <Border Background="{StaticResource NeoOrangeGradient}" CornerRadius="12" Width="36" Height="36" 
-                            Effect="{StaticResource NeoGlowOrange}" Margin="0,0,12,0">
-                        <TextBlock Text="Ω" Foreground="White" FontWeight="Bold" FontSize="18" 
+                    <Border Background="{StaticResource NeoOrangeGradient}" CornerRadius="8" Width="28" Height="28" 
+                            Effect="{StaticResource NeoGlowOrange}" Margin="0,0,10,0">
+                        <TextBlock Text="Ω" Foreground="White" FontWeight="Bold" FontSize="15" 
                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     
-                    <StackPanel Orientation="Vertical" Margin="0,0,24,0" VerticalAlignment="Center">
-                        <TextBlock Text="OhMyGit" Foreground="{StaticResource NeoTextPrimary}" FontWeight="Bold" FontSize="16"/>
-                        <TextBlock Text="Neomorphic Git Engine" Foreground="{StaticResource NeoTextMuted}" FontSize="11"/>
-                    </StackPanel>
+                    <TextBlock Text="OhMyGit" Foreground="{StaticResource NeoTextPrimary}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                    <Rectangle Width="1" Height="16" Fill="#282E3B" Margin="0,0,12,0" VerticalAlignment="Center"/>
 
                     <!-- Repo Pill -->
-                    <Border Style="{StaticResource NeoSunkenCard}" Padding="12,6" Margin="0,0,10,0">
+                    <Border Style="{StaticResource NeoSunkenCard}" Padding="10,4" Margin="0,0,8,0"
+                            WindowChrome.IsHitTestVisibleInChrome="True">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="📁 " FontSize="12"/>
+                            <TextBlock Text="📁 " FontSize="11"/>
                             <TextBlock Text="{Binding RepoName}" Foreground="{StaticResource NeoTextPrimary}" FontWeight="SemiBold" FontSize="12"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Branch Pill with Neon Green Indicator -->
-                    <Border Style="{StaticResource NeoSunkenCard}" Padding="12,6">
+                    <Border Style="{StaticResource NeoSunkenCard}" Padding="10,4"
+                            WindowChrome.IsHitTestVisibleInChrome="True">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Ellipse Width="7" Height="7" Fill="#10B981" Margin="0,0,7,0">
+                            <Ellipse Width="6" Height="6" Fill="#10B981" Margin="0,0,6,0">
                                 <Ellipse.Effect>
-                                    <DropShadowEffect Color="#10B981" BlurRadius="8" ShadowDepth="0" Opacity="0.8"/>
+                                    <DropShadowEffect Color="#10B981" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
                                 </Ellipse.Effect>
                             </Ellipse>
                             <TextBlock Text="{Binding CurrentBranch}" Foreground="#10B981" FontWeight="Bold" FontSize="12"/>
@@ -202,8 +170,15 @@
             </DockPanel>
         </Border>
 
-        <!-- MAIN WORKSPACE -->
-        <Grid Grid.Row="1">
+        <!-- 1. Workspace Content -->
+        <Grid Grid.Row="1" Margin="16,14,16,14">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- MAIN WORKSPACE -->
+            <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="280" MinWidth="200" MaxWidth="420"/>
                 <ColumnDefinition Width="14"/>
@@ -368,11 +343,32 @@
                             <RowDefinition Height="260" MinHeight="140"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Search Box (Sunken Neomorphic capsule) -->
-                        <Border Grid.Row="0" Margin="0,0,0,12">
-                            <TextBox Text="{Binding FilterKeyword, UpdateSourceTrigger=PropertyChanged}" 
-                                     Style="{StaticResource NeoTextBox}" Height="40" Padding="12,10"
-                                     ToolTip="搜索提交信息、作者或哈希"/>
+                        <!-- Search Box (Sunken Neomorphic capsule with placeholder) -->
+                        <Border Grid.Row="0" Style="{StaticResource NeoSunkenCard}" Height="38" Padding="12,0" Margin="0,0,0,12">
+                            <Grid VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="🔍" Foreground="#6B7280" FontSize="11" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <Grid Grid.Column="1">
+                                    <TextBox x:Name="TxtFilter" Text="{Binding FilterKeyword, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="Transparent" BorderThickness="0" Foreground="{StaticResource NeoTextPrimary}"
+                                             CaretBrush="#FF7700" FontSize="12" VerticalAlignment="Center"/>
+                                    <TextBlock Text="搜索提交历史 (支持按说明、作者、SHA 快速过滤)..." Foreground="#6B7280" FontSize="11" VerticalAlignment="Center" IsHitTestVisible="False">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Text, ElementName=TxtFilter}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+                            </Grid>
                         </Border>
 
                         <!-- Commits Table (Sunken container with rounded rows) -->
@@ -562,7 +558,7 @@
         </Grid>
 
         <!-- STATUS BAR -->
-        <Border Grid.Row="2" Style="{StaticResource NeoSunkenCard}" Padding="14,6" Margin="0,12,0,0">
+        <Border Grid.Row="1" Style="{StaticResource NeoSunkenCard}" Padding="14,6" Margin="0,12,0,0">
             <DockPanel LastChildFill="True">
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
                     <TextBlock Text="LibGit2Sharp Native Engine" Foreground="{StaticResource NeoTextMuted}" FontSize="11" Margin="0,0,16,0"/>
