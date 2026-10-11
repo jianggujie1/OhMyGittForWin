@@ -1,5 +1,7 @@
 using System.Windows;
+using System.Windows.Controls;
 using Microsoft.Win32;
+using OhMyGittForWin.Models;
 using OhMyGittForWin.ViewModels;
 using OhMyGittForWin.Views;
 
@@ -56,5 +58,16 @@ public partial class MainWindow : Window
         LogContentPanel.Visibility = Visibility.Collapsed;
         CommitContentPanel.Visibility = Visibility.Visible;
         ViewModel.SelectedTabIndex = 1;
+    }
+
+    private void BranchesListBox_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is ListBox listBox && listBox.SelectedItem is GitBranchItem branch)
+        {
+            if (!branch.IsCurrentHead)
+            {
+                ViewModel.CheckoutBranchCommand.Execute(branch);
+            }
+        }
     }
 }

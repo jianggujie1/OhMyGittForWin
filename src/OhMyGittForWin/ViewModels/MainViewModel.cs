@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using OhMyGittForWin.Models;
 using OhMyGittForWin.Services;
+using OhMyGittForWin.Views;
 
 namespace OhMyGittForWin.ViewModels;
 
@@ -318,6 +319,100 @@ public partial class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             MessageBox.Show(ex.Message, "提交失败", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    public void ManageRemotes()
+    {
+        if (string.IsNullOrWhiteSpace(RepoPath) || !_gitService.IsGitRepository(RepoPath))
+        {
+            MessageBox.Show("请先打开一个 Git 仓库！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var dlg = new ManageRemotesDialog(RepoPath, CurrentBranch, _gitService)
+        {
+            Owner = Application.Current.MainWindow
+        };
+        dlg.ShowDialog();
+        if (dlg.HasChanges)
+        {
+            _ = RefreshRepositoryAsync();
+        }
+    }
+
+    [RelayCommand]
+    public void CreateBranch()
+    {
+        if (string.IsNullOrWhiteSpace(RepoPath) || !_gitService.IsGitRepository(RepoPath))
+        {
+            MessageBox.Show("请先打开一个 Git 仓库！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var dlg = new CreateBranchDialog(RepoPath, _gitService)
+        {
+            Owner = Application.Current.MainWindow
+        };
+        if (dlg.ShowDialog() == true && dlg.Created)
+        {
+            _ = RefreshRepositoryAsync();
+        }
+    }
+
+    [RelayCommand]
+    public void CheckoutBranch(GitBranchItem? branch)
+    {
+        if (branch == null || branch.IsCurrentHead || string.IsNullOrWhiteSpace(RepoPath)) return;
+        try
+        {
+            _gitService.CheckoutBranch(RepoPath, branch.Name);
+            StatusMessage = $"已切换到分支: {branch.FriendlyName}";
+            _ = RefreshRepositoryAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"切换分支失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    public void DeleteBranch(GitBranchItem? branch)
+    {
+        if (branch == null || branch.IsCurrentHead || string.IsNullOrWhiteSpace(RepoPath)) return;
+
+        var result = MessageBox.Show($"确定要删除分支 [{branch.FriendlyName}] 吗？", "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (result != MessageBoxResult.Yes) return;
+
+        try
+        {
+            if (branch.IsRemote)
+            {
+                string remoteBranch = branch.FriendlyName;
+                int slashIndex = remoteBranch.IndexOf('/');
+                if (slashIndex > 0)
+                {
+                    string remoteName = remoteBranch.Substring(0, slashIndex);
+                    string branchName = remoteBranch.Substring(slashIndex + 1);
+                    var (success, output) = _gitService.DeleteRemoteBranch(RepoPath, remoteName, branchName);
+                    if (!success)
+                    {
+                        MessageBox.Show($"删除远程分支失败: {output}", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                _gitService.DeleteBranch(RepoPath, branch.Name);
+            }
+            StatusMessage = $"已删除分支: {branch.FriendlyName}";
+            _ = RefreshRepositoryAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"删除分支失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }

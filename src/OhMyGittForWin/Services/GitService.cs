@@ -342,4 +342,129 @@ public class GitService : IGitService
         string rightSha = commit.Sha.Substring(0, Math.Min(7, commit.Sha.Length));
         return _diffService.BuildIdeaDiff(relativePath, oldContent, newContent, leftSha, $"Commit {rightSha}");
     }
+
+    private static string GetGitExePath()
+    {
+        var commonPaths = new[]
+        {
+            @"C:\Program Files\Git\cmd\git.exe",
+            @"C:\Program Files\Git\bin\git.exe",
+            @"C:\Program Files (x86)\Git\cmd\git.exe",
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Programs\Git\cmd\git.exe")
+        };
+        foreach (var p in commonPaths)
+        {
+            if (File.Exists(p)) return p;
+        }
+        return "git";
+    }
+
+    private static (bool Success, string Output) RunGitCommand(string repoPath, string arguments)
+    {
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = GetGitExePath(),
+                Arguments = arguments,
+                WorkingDirectory = repoPath,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            using var process = System.Diagnostics.Process.Start(psi);
+            if (process == null) return (false, "无法启动 git 进程");
+            string stdout = process.StandardOutput.ReadToEnd();
+            string stderr = process.StandardError.ReadToEnd();
+            process.WaitForExit(30000);
+            string output = string.IsNullOrWhiteSpace(stdout) ? stderr : stdout;
+            return (process.ExitCode == 0, output.Trim());
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
+
+    public List<GitRemoteItem> GetRemotes(string repoPath)
+    {
+        using var repo = new Repository(repoPath);
+        return repo.Network.Remotes.Select(r => new GitRemoteItem { Name = r.Name, Url = r.Url }).ToList();
+    }
+
+    public void AddRemote(string repoPath, string name, string url)
+    {
+        using var repo = new Repository(repoPath);
+        repo.Network.Remotes.Add(name, url);
+    }
+
+    public void RemoveRemote(string repoPath, string name)
+    {
+        using var repo = new Repository(repoPath);
+        repo.Network.Remotes.Remove(name);
+    }
+
+    public void CreateBranch(string repoPath, string branchName, string? targetSha = null)
+    {
+        using var repo = new Repository(repoPath);
+        var tip = targetSha != null ? repo.Lookup<Commit>(targetSha) : repo.Head.Tip;
+        if (tip != null)
+        {
+            repo.CreateBranch(branchName, tip);
+        }
+    }
+
+    public void CheckoutBranch(string repoPath, string branchName)
+    {
+        using var repo = new Repository(repoPath);
+        var branch = repo.Branches[branchName];
+        if (branch != null)
+        {
+            if (branch.IsRemote)
+            {
+                // Create or checkout local tracking branch
+                string localName = branch.FriendlyName.Contains('/') 
+                    ? branch.FriendlyName.Substring(branch.FriendlyName.IndexOf('/') + 1)
+                    : branch.FriendlyName;
+                var localBranch = repo.Branches[localName];
+                if (localBranch == null)
+                {
+                    localBranch = repo.CreateBranch(localName, branch.Tip);
+                    repo.Branches.Update(localBranch, b => b.TrackedBranch = branch.CanonicalName);
+                }
+                Commands.Checkout(repo, localBranch);
+            }
+            else
+            {
+                Commands.Checkout(repo, branch);
+            }
+        }
+    }
+
+    public void DeleteBranch(string repoPath, string branchName)
+    {
+        using var repo = new Repository(repoPath);
+        var branch = repo.Branches[branchName];
+        if (branch != null)
+        {
+            repo.Branches.Remove(branch);
+        }
+    }
+
+    public (bool Success, string Output) PushBranch(string repoPath, string remoteName, string branchName, bool setUpstream = true)
+    {
+        string args = setUpstream ? $"push -u {remoteName} {branchName}" : $"push {remoteName} {branchName}";
+        return RunGitCommand(repoPath, args);
+    }
+
+    public (bool Success, string Output) Fetch(string repoPath, string remoteName = "origin")
+    {
+        return RunGitCommand(repoPath, $"fetch {remoteName} --prune");
+    }
+
+    public (bool Success, string Output) DeleteRemoteBranch(string repoPath, string remoteName, string branchName)
+    {
+        return RunGitCommand(repoPath, $"push {remoteName} --delete {branchName}");
+    }
 }

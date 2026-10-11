@@ -34,9 +34,11 @@
                 <!-- Action Buttons on Right -->
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
                     <Button Content="📂 打开仓库" Command="{Binding OpenRepositoryCommand}"
-                            Style="{StaticResource NeoButton}" Margin="0,0,10,0"/>
+                            Style="{StaticResource NeoButton}" Margin="0,0,8,0"/>
                     <Button Content="🔄 刷新" Command="{Binding RefreshRepositoryCommand}"
-                            Style="{StaticResource NeoButton}" Margin="0,0,12,0"/>
+                            Style="{StaticResource NeoButton}" Margin="0,0,8,0"/>
+                    <Button Content="🌐 远程与推送" Command="{Binding ManageRemotesCommand}"
+                            Style="{StaticResource NeoButton}" Margin="0,0,10,0"/>
                     <Button Content="⚡ 3-Way 冲突解决器" Click="OpenConflictResolver_Click"
                             Style="{StaticResource NeoAccentBlueButton}"/>
                 </StackPanel>
@@ -94,20 +96,41 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <DockPanel Grid.Row="0" Margin="0,0,0,12">
+                    <DockPanel Grid.Row="0" Margin="0,0,0,10">
                         <TextBlock Text="BRANCHES" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding Branches.Count, StringFormat='({0})'}" Foreground="{StaticResource NeoTextMuted}" FontSize="11" 
-                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Branches.Count, StringFormat='({0})'}" Foreground="{StaticResource NeoTextMuted}" FontSize="11" 
+                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <Button Content="＋ 新建" ToolTip="新建本地分支" Command="{Binding CreateBranchCommand}"
+                                    Style="{StaticResource NeoButton}" Padding="7,3" FontSize="11" Margin="0,0,4,0"/>
+                            <Button Content="🌐 远程" ToolTip="管理远程源与分支推送" Command="{Binding ManageRemotesCommand}"
+                                    Style="{StaticResource NeoButton}" Padding="7,3" FontSize="11"/>
+                        </StackPanel>
                     </DockPanel>
 
                     <Border Grid.Row="1" Style="{StaticResource NeoSunkenCard}" Padding="6">
-                        <ListBox ItemsSource="{Binding Branches}" Background="Transparent" BorderThickness="0">
+                        <ListBox ItemsSource="{Binding Branches}" Background="Transparent" BorderThickness="0"
+                                 MouseDoubleClick="BranchesListBox_MouseDoubleClick">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="ListBoxItem">
                                                 <Border x:Name="itemBorder" CornerRadius="8" Padding="10,7" Margin="0,2" Background="Transparent">
+                                                    <Border.ContextMenu>
+                                                        <ContextMenu Background="#20242D" Foreground="#E2E8F0" BorderBrush="#374151">
+                                                            <MenuItem Header="切换检出此分支 (Checkout)" 
+                                                                      Command="{Binding DataContext.CheckoutBranchCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                      CommandParameter="{Binding}" />
+                                                            <Separator Background="#374151"/>
+                                                            <MenuItem Header="推送到远程 / 管理远程 (Push...)" 
+                                                                      Command="{Binding DataContext.ManageRemotesCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                                            <Separator Background="#374151"/>
+                                                            <MenuItem Header="删除分支 (Delete)" Foreground="#EF4444"
+                                                                      Command="{Binding DataContext.DeleteBranchCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                      CommandParameter="{Binding}" />
+                                                        </ContextMenu>
+                                                    </Border.ContextMenu>
                                                     <ContentPresenter/>
                                                 </Border>
                                                 <ControlTemplate.Triggers>

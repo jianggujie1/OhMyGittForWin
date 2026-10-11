@@ -1,0 +1,48 @@
+<Window x:Class="OhMyGittForWin.Views.CreateBranchDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="新建 Git 分支 - OhMyGittForWin"
+        Height="310" Width="490"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{StaticResource NeoBgBrush}">
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Style="{StaticResource NeoCard}" Padding="16,12" Margin="0,0,0,14">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="CREATE NEW BRANCH" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11"/>
+                <TextBlock Text="新建本地分支" Foreground="{StaticResource NeoTextPrimary}" FontSize="15" FontWeight="Bold" Margin="0,2,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Form Card -->
+        <Border Grid.Row="1" Style="{StaticResource NeoCard}" Padding="16" Margin="0,0,0,14">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="新分支名称:" Foreground="{StaticResource NeoTextSecondary}" FontSize="12" Margin="0,0,0,6"/>
+                <TextBox x:Name="TxtBranchName" Style="{StaticResource NeoTextBox}" Height="38" Padding="10,8" Margin="0,0,0,14"
+                         ToolTip="例如 feature/diff-viewer 或 dev"/>
+
+                <CheckBox x:Name="ChkCheckout" Content="创建后立即切换检出到新分支 (Checkout)" 
+                          IsChecked="True" Foreground="{StaticResource NeoTextPrimary}" FontSize="12"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Buttons -->
+        <Border Grid.Row="2" Style="{StaticResource NeoSunkenCard}" Padding="12,8">
+            <DockPanel LastChildFill="True">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                    <Button Content="取消" Click="BtnCancel_Click" Style="{StaticResource NeoButton}" Padding="16,6" Margin="0,0,10,0"/>
+                    <Button Content="创建分支" Click="BtnCreate_Click" Style="{StaticResource NeoPrimaryButton}" Padding="18,6"/>
+                </StackPanel>
+                <TextBlock x:Name="TxtStatus" Text="输入分支名称并创建" Foreground="{StaticResource NeoTextMuted}" FontSize="12" VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

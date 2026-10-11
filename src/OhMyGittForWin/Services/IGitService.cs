@@ -21,4 +21,15 @@ public interface IGitService
     IdeaFileDiffResult GetIdeaFileDiff(string repoPath, string relativePath, bool isStaged);
     IdeaFileDiffResult GetIdeaCommitFileDiff(string repoPath, string commitSha, string relativePath);
     List<string> GetChangedFilesForCommit(string repoPath, string commitSha);
+
+    // Remote and branch operations
+    List<GitRemoteItem> GetRemotes(string repoPath);
+    void AddRemote(string repoPath, string name, string url);
+    void RemoveRemote(string repoPath, string name);
+    void CreateBranch(string repoPath, string branchName, string? targetSha = null);
+    void CheckoutBranch(string repoPath, string branchName);
+    void DeleteBranch(string repoPath, string branchName);
+    (bool Success, string Output) PushBranch(string repoPath, string remoteName, string branchName, bool setUpstream = true);
+    (bool Success, string Output) Fetch(string repoPath, string remoteName = "origin");
+    (bool Success, string Output) DeleteRemoteBranch(string repoPath, string remoteName, string branchName);
 }
