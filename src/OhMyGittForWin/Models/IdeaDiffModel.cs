@@ -17,6 +17,8 @@ public class IdeaDiffLine
     public string Text { get; set; } = string.Empty;
     public ChangeType Type { get; set; } = ChangeType.Unchanged;
     public List<IdeaWordPiece> WordPieces { get; set; } = new();
+
+    public bool HasHighlights => Type != ChangeType.Unchanged && WordPieces.Count > 1;
 }
 
 public partial class IdeaDiffHunk : ObservableObject

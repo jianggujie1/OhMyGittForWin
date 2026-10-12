@@ -73,9 +73,20 @@ public partial class MainViewModel : ObservableObject
     public bool IsWorkingTreeClean => StatusFiles.Count == 0;
     public bool HasChangesToCommit => StatusFiles.Count > 0;
 
+    [ObservableProperty]
+    private string _gpuAccelerationStatus = string.Empty;
+
     public MainViewModel(IGitService gitService)
     {
         _gitService = gitService;
+
+        int tier = (System.Windows.Media.RenderCapability.Tier >> 16);
+        GpuAccelerationStatus = tier switch
+        {
+            2 => "⚡ GPU 加速: Tier 2 (Direct3D 硬件渲染)",
+            1 => "⚡ GPU 加速: Tier 1 (部分硬件加速)",
+            _ => "⚠️ 渲染模式: Tier 0 (软件光栅化)"
+        };
     }
 
     public MainViewModel() : this(new GitService())

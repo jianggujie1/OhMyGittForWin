@@ -11,7 +11,12 @@
         Height="860" Width="1380"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
-        Background="{StaticResource NeoBgBrush}">
+        Background="{StaticResource NeoBgBrush}"
+        RenderOptions.ClearTypeHint="Enabled"
+        RenderOptions.BitmapScalingMode="NearestNeighbor"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        SnapsToDevicePixels="True">
 
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="50"
@@ -28,6 +33,98 @@
     <Window.Resources>
         <conv:DiffTypeToColorConverter x:Key="DiffColorConv" />
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <!-- Segmented Tab Button with Fluid Physics Interaction -->
+        <Style x:Key="NeoSegmentedTabButton" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="2,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="tabBorder" CornerRadius="10" Padding="16,8" Background="Transparent"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="tabScale" ScaleX="1" ScaleY="1"/>
+                                    <TranslateTransform x:Name="tabTrans" Y="0"/>
+                                </TransformGroup>
+                            </Border.RenderTransform>
+                            <Grid>
+                                <Border x:Name="hoverBg" Background="#262A34" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                                <ContentPresenter x:Name="cp" TextElement.FontWeight="Bold" TextElement.FontSize="12"
+                                                  TextElement.Foreground="{StaticResource NeoTextSecondary}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsChecked" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <MultiTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="hoverBg" Storyboard.TargetProperty="Opacity" To="0.75" Duration="0:0:0.12"/>
+                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleX" To="1.02" Duration="0:0:0.12">
+                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleY" To="1.02" Duration="0:0:0.12">
+                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </MultiTrigger.EnterActions>
+                                <MultiTrigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="hoverBg" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/>
+                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.18">
+                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.18">
+                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </MultiTrigger.ExitActions>
+                            </MultiTrigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleX" To="1.03" Duration="0:0:0.14">
+                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleY" To="1.03" Duration="0:0:0.14">
+                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="tabTrans" Storyboard.TargetProperty="Y" To="-0.8" Duration="0:0:0.14">
+                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.15"/>
+                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.15"/>
+                                            <DoubleAnimation Storyboard.TargetName="tabTrans" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.15"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                                <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource NeoSurfaceGradient}"/>
+                                <Setter TargetName="tabBorder" Property="BorderBrush" Value="{StaticResource NeoRaisedBorderBrush}"/>
+                                <Setter TargetName="tabBorder" Property="BorderThickness" Value="1"/>
+                                <Setter TargetName="tabBorder" Property="Effect" Value="{StaticResource NeoButtonShadow}"/>
+                                <Setter TargetName="cp" Property="TextElement.Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid x:Name="RootContainer" Background="{StaticResource NeoBgBrush}">
@@ -40,134 +137,174 @@
 
         <!-- 0. Unified Pro Header Bar (Zero Redundancy!) -->
         <Border Grid.Row="0" Background="#151820" BorderBrush="#232834" BorderThickness="0,0,0,1">
-            <DockPanel LastChildFill="True">
-                <!-- Right: Action Buttons + Window Controls -->
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center"
-                            WindowChrome.IsHitTestVisibleInChrome="True">
-                    <Button Content="📂 打开仓库" Command="{Binding OpenRepositoryCommand}"
-                            Style="{StaticResource NeoButton}" Height="32" Padding="10,0" Margin="0,0,6,0"/>
-                    <Button Content="🔄 刷新" Command="{Binding RefreshRepositoryCommand}"
-                            Style="{StaticResource NeoButton}" Height="32" Padding="10,0" Margin="0,0,6,0"/>
-                    <Button Content="⬆ 推送 (Push)" Command="{Binding PushCommand}"
-                            Style="{StaticResource NeoPrimaryButton}" Height="32" Padding="12,0" Margin="0,0,6,0"/>
-                    <Button Content="🌐 远程管理" Command="{Binding ManageRemotesCommand}"
-                            Style="{StaticResource NeoButton}" Height="32" Padding="10,0" Margin="0,0,8,0"/>
-                    <Button Content="⚡ 3-Way 冲突解决器" Click="OpenConflictResolver_Click"
-                            Style="{StaticResource NeoAccentBlueButton}" Height="32" Padding="12,0" Margin="0,0,12,0"/>
+            <Grid>
+                <DockPanel LastChildFill="True">
+                    <!-- Right: Action Buttons + Window Controls -->
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                        <Button Content="📂 打开仓库" Command="{Binding OpenRepositoryCommand}"
+                                Style="{StaticResource NeoButton}" Height="32" Padding="10,0" Margin="0,0,6,0"/>
 
-                    <!-- Subtle Separator -->
-                    <Rectangle Width="1" Height="22" Fill="#282E3B" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <!-- Interactive Refresh Button with Rotating Spinner -->
+                        <Button Command="{Binding RefreshRepositoryCommand}"
+                                Style="{StaticResource NeoButton}" Height="32" Padding="10,0" Margin="0,0,6,0" ToolTip="刷新仓库状态">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="🔄" RenderTransformOrigin="0.5,0.5" Margin="0,0,5,0" VerticalAlignment="Center">
+                                    <TextBlock.RenderTransform>
+                                        <RotateTransform x:Name="refreshSpin" Angle="0"/>
+                                    </TextBlock.RenderTransform>
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsLoading}" Value="True">
+                                                    <DataTrigger.EnterActions>
+                                                        <BeginStoryboard x:Name="SpinStory">
+                                                            <Storyboard RepeatBehavior="Forever">
+                                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                                                 From="0" To="360" Duration="0:0:0.75"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </DataTrigger.EnterActions>
+                                                    <DataTrigger.ExitActions>
+                                                        <StopStoryboard BeginStoryboardName="SpinStory"/>
+                                                    </DataTrigger.ExitActions>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="刷新" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
-                    <!-- Window Control Buttons -->
-                    <Button x:Name="BtnMinimize" Click="BtnMinimize_Click" Width="44" Height="50" 
-                            Background="Transparent" BorderThickness="0" Foreground="{StaticResource NeoTextMuted}"
-                            FontSize="13" Content="─" ToolTip="最小化">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border x:Name="bd" Background="{TemplateBinding Background}">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="bd" Property="Background" Value="#252A36"/>
-                                                    <Setter Property="Foreground" Value="White"/>
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </Button.Style>
-                    </Button>
+                        <Button Content="⬆ 推送 (Push)" Command="{Binding PushCommand}"
+                                Style="{StaticResource NeoPrimaryButton}" Height="32" Padding="12,0" Margin="0,0,6,0"/>
+                        <Button Content="🌐 远程管理" Command="{Binding ManageRemotesCommand}"
+                                Style="{StaticResource NeoButton}" Height="32" Padding="10,0" Margin="0,0,8,0"/>
+                        <Button Content="⚡ 3-Way 冲突解决器" Click="OpenConflictResolver_Click"
+                                Style="{StaticResource NeoAccentBlueButton}" Height="32" Padding="12,0" Margin="0,0,12,0"/>
 
-                    <Button x:Name="BtnMaximize" Click="BtnMaximize_Click" Width="44" Height="50" 
-                            Background="Transparent" BorderThickness="0" Foreground="{StaticResource NeoTextMuted}"
-                            FontSize="12" Content="□" ToolTip="最大化 / 还原">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border x:Name="bd" Background="{TemplateBinding Background}">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="bd" Property="Background" Value="#252A36"/>
-                                                    <Setter Property="Foreground" Value="White"/>
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </Button.Style>
-                    </Button>
+                        <!-- Subtle Separator -->
+                        <Rectangle Width="1" Height="22" Fill="#282E3B" Margin="0,0,6,0" VerticalAlignment="Center"/>
 
-                    <Button x:Name="BtnClose" Click="BtnClose_Click" Width="48" Height="50" 
-                            Background="Transparent" BorderThickness="0" Foreground="{StaticResource NeoTextMuted}"
-                            FontSize="13" Content="✕" ToolTip="关闭">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border x:Name="bd" Background="{TemplateBinding Background}">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="bd" Property="Background" Value="#E11D48"/>
-                                                    <Setter Property="Foreground" Value="White"/>
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                </StackPanel>
+                        <!-- Window Control Buttons with Smooth Fade -->
+                        <Button x:Name="BtnMinimize" Click="BtnMinimize_Click" Width="44" Height="50" 
+                                Background="Transparent" BorderThickness="0" Foreground="{StaticResource NeoTextMuted}"
+                                FontSize="13" Content="─" ToolTip="最小化">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="bd" Background="{TemplateBinding Background}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="bd" Property="Background" Value="#252A36"/>
+                                                        <Setter Property="Foreground" Value="White"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                        </Button>
 
-                <!-- Left: App Brand & Status Pills -->
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
-                    <!-- Brand Icon with Warm Orange Glow -->
-                    <Border Background="{StaticResource NeoOrangeGradient}" CornerRadius="8" Width="28" Height="28" 
-                            Effect="{StaticResource NeoGlowOrange}" Margin="0,0,10,0">
-                        <TextBlock Text="Ω" Foreground="White" FontWeight="Bold" FontSize="15" 
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    
-                    <TextBlock Text="OhMyGit" Foreground="{StaticResource NeoTextPrimary}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <Button x:Name="BtnMaximize" Click="BtnMaximize_Click" Width="44" Height="50" 
+                                Background="Transparent" BorderThickness="0" Foreground="{StaticResource NeoTextMuted}"
+                                FontSize="12" Content="□" ToolTip="最大化 / 还原">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="bd" Background="{TemplateBinding Background}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="bd" Property="Background" Value="#252A36"/>
+                                                        <Setter Property="Foreground" Value="White"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                        </Button>
 
-                    <Rectangle Width="1" Height="16" Fill="#282E3B" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                        <Button x:Name="BtnClose" Click="BtnClose_Click" Width="48" Height="50" 
+                                Background="Transparent" BorderThickness="0" Foreground="{StaticResource NeoTextMuted}"
+                                FontSize="13" Content="✕" ToolTip="关闭">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="bd" Background="{TemplateBinding Background}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="bd" Property="Background" Value="#E11D48"/>
+                                                        <Setter Property="Foreground" Value="White"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
 
-                    <!-- Repo Pill -->
-                    <Border Style="{StaticResource NeoSunkenCard}" Padding="10,4" Margin="0,0,8,0"
-                            WindowChrome.IsHitTestVisibleInChrome="True">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="📁 " FontSize="11"/>
-                            <TextBlock Text="{Binding RepoName}" Foreground="{StaticResource NeoTextPrimary}" FontWeight="SemiBold" FontSize="12"/>
-                        </StackPanel>
-                    </Border>
+                    <!-- Left: App Brand & Status Pills -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
+                        <!-- Brand Icon with Warm Orange Glow -->
+                        <Border Background="{StaticResource NeoOrangeGradient}" CornerRadius="8" Width="28" Height="28" 
+                                Effect="{StaticResource NeoGlowOrange}" Margin="0,0,10,0">
+                            <TextBlock Text="Ω" Foreground="White" FontWeight="Bold" FontSize="15" 
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        
+                        <TextBlock Text="OhMyGit" Foreground="{StaticResource NeoTextPrimary}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" Margin="0,0,12,0"/>
 
-                    <!-- Branch Pill with Neon Green Indicator -->
-                    <Border Style="{StaticResource NeoSunkenCard}" Padding="10,4"
-                            WindowChrome.IsHitTestVisibleInChrome="True">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Ellipse Width="6" Height="6" Fill="#10B981" Margin="0,0,6,0">
-                                <Ellipse.Effect>
-                                    <DropShadowEffect Color="#10B981" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
-                                </Ellipse.Effect>
-                            </Ellipse>
-                            <TextBlock Text="{Binding CurrentBranch}" Foreground="#10B981" FontWeight="Bold" FontSize="12"/>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </DockPanel>
+                        <Rectangle Width="1" Height="16" Fill="#282E3B" Margin="0,0,12,0" VerticalAlignment="Center"/>
+
+                        <!-- Repo Pill -->
+                        <Border Style="{StaticResource NeoSunkenCard}" Padding="10,4" Margin="0,0,8,0"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="📁 " FontSize="11"/>
+                                <TextBlock Text="{Binding RepoName}" Foreground="{StaticResource NeoTextPrimary}" FontWeight="SemiBold" FontSize="12"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Branch Pill with Neon Green Indicator -->
+                        <Border Style="{StaticResource NeoSunkenCard}" Padding="10,4"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Ellipse Width="6" Height="6" Fill="#10B981" Margin="0,0,6,0">
+                                    <Ellipse.Effect>
+                                        <DropShadowEffect Color="#10B981" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
+                                    </Ellipse.Effect>
+                                </Ellipse>
+                                <TextBlock Text="{Binding CurrentBranch}" Foreground="#10B981" FontWeight="Bold" FontSize="12"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Indeterminate Neon Loading Progress Bar attached to Header Bottom -->
+                <ProgressBar VerticalAlignment="Bottom" Height="2"
+                             IsIndeterminate="{Binding IsLoading}"
+                             Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"
+                             Foreground="{StaticResource NeoAccentOrangeBrush}"
+                             Background="Transparent" BorderThickness="0"/>
+            </Grid>
         </Border>
 
         <!-- 1. Workspace Content -->
@@ -207,40 +344,27 @@
 
                     <Border Grid.Row="1" Style="{StaticResource NeoSunkenCard}" Padding="6">
                         <ListBox ItemsSource="{Binding Branches}" Background="Transparent" BorderThickness="0"
+                                 VirtualizingPanel.IsVirtualizing="True"
+                                 VirtualizingPanel.VirtualizationMode="Recycling"
+                                 VirtualizingPanel.ScrollUnit="Pixel"
+                                 ScrollViewer.CanContentScroll="True"
                                  MouseDoubleClick="BranchesListBox_MouseDoubleClick">
                             <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem">
-                                    <Setter Property="Template">
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource NeoListBoxItem}">
+                                    <Setter Property="ContextMenu">
                                         <Setter.Value>
-                                            <ControlTemplate TargetType="ListBoxItem">
-                                                <Border x:Name="itemBorder" CornerRadius="8" Padding="10,7" Margin="0,2" Background="Transparent">
-                                                    <Border.ContextMenu>
-                                                        <ContextMenu Background="#20242D" Foreground="#E2E8F0" BorderBrush="#374151">
-                                                            <MenuItem Header="切换检出此分支 (Checkout)" 
-                                                                      Command="{Binding DataContext.CheckoutBranchCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                      CommandParameter="{Binding}" />
-                                                            <Separator Background="#374151"/>
-                                                            <MenuItem Header="推送到远程 / 管理远程 (Push...)" 
-                                                                      Command="{Binding DataContext.ManageRemotesCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-                                                            <Separator Background="#374151"/>
-                                                            <MenuItem Header="删除分支 (Delete)" Foreground="#EF4444"
-                                                                      Command="{Binding DataContext.DeleteBranchCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                      CommandParameter="{Binding}" />
-                                                        </ContextMenu>
-                                                    </Border.ContextMenu>
-                                                    <ContentPresenter/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="itemBorder" Property="Background" Value="#252A36"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsSelected" Value="True">
-                                                        <Setter TargetName="itemBorder" Property="Background" Value="#2B3241"/>
-                                                        <Setter TargetName="itemBorder" Property="BorderBrush" Value="#4B5563"/>
-                                                        <Setter TargetName="itemBorder" Property="BorderThickness" Value="1"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
+                                            <ContextMenu Background="#20242D" Foreground="#E2E8F0" BorderBrush="#374151">
+                                                <MenuItem Header="切换检出此分支 (Checkout)" 
+                                                          Command="{Binding DataContext.CheckoutBranchCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                          CommandParameter="{Binding}" />
+                                                <Separator Background="#374151"/>
+                                                <MenuItem Header="推送到远程 / 管理远程 (Push...)" 
+                                                          Command="{Binding DataContext.ManageRemotesCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                                <Separator Background="#374151"/>
+                                                <MenuItem Header="删除分支 (Delete)" Foreground="#EF4444"
+                                                          Command="{Binding DataContext.DeleteBranchCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                          CommandParameter="{Binding}" />
+                                            </ContextMenu>
                                         </Setter.Value>
                                     </Setter>
                                 </Style>
@@ -278,59 +402,11 @@
                         <StackPanel Orientation="Horizontal">
                             <!-- Tab 0: Log -->
                             <RadioButton Content="📜 Git Log (提交历史树)" GroupName="MainTabs" IsChecked="True"
-                                         Click="TabLog_Click" Cursor="Hand" Margin="2,0">
-                                <RadioButton.Style>
-                                    <Style TargetType="RadioButton">
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="RadioButton">
-                                                    <Border x:Name="tabBorder" CornerRadius="10" Padding="16,8" Background="Transparent">
-                                                        <ContentPresenter TextElement.FontWeight="Bold" TextElement.FontSize="12"
-                                                                          TextElement.Foreground="{StaticResource NeoTextSecondary}"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsChecked" Value="True">
-                                                            <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource NeoSurfaceGradient}"/>
-                                                            <Setter TargetName="tabBorder" Property="BorderBrush" Value="{StaticResource NeoRaisedBorderBrush}"/>
-                                                            <Setter TargetName="tabBorder" Property="BorderThickness" Value="1"/>
-                                                            <Setter TargetName="tabBorder" Property="Effect" Value="{StaticResource NeoButtonShadow}"/>
-                                                            <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </RadioButton.Style>
-                            </RadioButton>
+                                         Click="TabLog_Click" Cursor="Hand" Style="{StaticResource NeoSegmentedTabButton}"/>
 
                             <!-- Tab 1: Commit -->
                             <RadioButton Content="✍️ Commit (变更与暂存)" GroupName="MainTabs"
-                                         Click="TabCommit_Click" Cursor="Hand" Margin="2,0">
-                                <RadioButton.Style>
-                                    <Style TargetType="RadioButton">
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="RadioButton">
-                                                    <Border x:Name="tabBorder" CornerRadius="10" Padding="16,8" Background="Transparent">
-                                                        <ContentPresenter TextElement.FontWeight="Bold" TextElement.FontSize="12"
-                                                                          TextElement.Foreground="{StaticResource NeoTextSecondary}"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsChecked" Value="True">
-                                                            <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource NeoSurfaceGradient}"/>
-                                                            <Setter TargetName="tabBorder" Property="BorderBrush" Value="{StaticResource NeoRaisedBorderBrush}"/>
-                                                            <Setter TargetName="tabBorder" Property="BorderThickness" Value="1"/>
-                                                            <Setter TargetName="tabBorder" Property="Effect" Value="{StaticResource NeoButtonShadow}"/>
-                                                            <Setter Property="TextElement.Foreground" Value="#FFFFFF"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </RadioButton.Style>
-                            </RadioButton>
+                                         Click="TabCommit_Click" Cursor="Hand" Style="{StaticResource NeoSegmentedTabButton}"/>
                         </StackPanel>
                     </Border>
 
@@ -465,7 +541,7 @@
                                                                     Opacity="0"
                                                                     SnapsToDevicePixels="True"/>
 
-                                                            <!-- Left Neon Pill Indicator -->
+                                                            <!-- Left Neon Pill Indicator with Expansion Animation -->
                                                             <Border x:Name="ActivePill" 
                                                                     Width="3.5" 
                                                                     Height="18" 
@@ -474,7 +550,12 @@
                                                                     VerticalAlignment="Center" 
                                                                     Margin="3,0,0,0" 
                                                                     Background="#38BDF8" 
-                                                                    Opacity="0"/>
+                                                                    Opacity="0"
+                                                                    RenderTransformOrigin="0.5,0.5">
+                                                                <Border.RenderTransform>
+                                                                    <ScaleTransform x:Name="pillScale" ScaleY="0.2"/>
+                                                                </Border.RenderTransform>
+                                                            </Border>
 
                                                             <!-- Cells Presenter -->
                                                             <DataGridCellsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
@@ -483,18 +564,50 @@
                                                         </Grid>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
-                                                        <!-- Direct hardware-accelerated triggers for maximum fluidity -->
+                                                        <!-- Fluid Ambient Hover Illumination -->
                                                         <MultiTrigger>
                                                             <MultiTrigger.Conditions>
                                                                 <Condition Property="IsMouseOver" Value="True"/>
                                                                 <Condition Property="IsSelected" Value="False"/>
                                                             </MultiTrigger.Conditions>
-                                                            <Setter TargetName="HoverLayer" Property="Opacity" Value="0.9"/>
+                                                            <MultiTrigger.EnterActions>
+                                                                <BeginStoryboard>
+                                                                    <Storyboard>
+                                                                        <DoubleAnimation Storyboard.TargetName="HoverLayer" Storyboard.TargetProperty="Opacity" To="0.9" Duration="0:0:0.1"/>
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </MultiTrigger.EnterActions>
+                                                            <MultiTrigger.ExitActions>
+                                                                <BeginStoryboard>
+                                                                    <Storyboard>
+                                                                        <DoubleAnimation Storyboard.TargetName="HoverLayer" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.16"/>
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </MultiTrigger.ExitActions>
                                                         </MultiTrigger>
 
+                                                        <!-- Fluid Selection Active Pill Expansion -->
                                                         <Trigger Property="IsSelected" Value="True">
-                                                            <Setter TargetName="SelectedLayer" Property="Opacity" Value="1"/>
-                                                            <Setter TargetName="ActivePill" Property="Opacity" Value="1"/>
+                                                            <Trigger.EnterActions>
+                                                                <BeginStoryboard>
+                                                                    <Storyboard>
+                                                                        <DoubleAnimation Storyboard.TargetName="SelectedLayer" Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.1"/>
+                                                                        <DoubleAnimation Storyboard.TargetName="ActivePill" Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.1"/>
+                                                                        <DoubleAnimation Storyboard.TargetName="pillScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.15">
+                                                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                                                        </DoubleAnimation>
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </Trigger.EnterActions>
+                                                            <Trigger.ExitActions>
+                                                                <BeginStoryboard>
+                                                                    <Storyboard>
+                                                                        <DoubleAnimation Storyboard.TargetName="SelectedLayer" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.14"/>
+                                                                        <DoubleAnimation Storyboard.TargetName="ActivePill" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.14"/>
+                                                                        <DoubleAnimation Storyboard.TargetName="pillScale" Storyboard.TargetProperty="ScaleY" To="0.2" Duration="0:0:0.14"/>
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </Trigger.ExitActions>
                                                             <Setter Property="Foreground" Value="#FFFFFF"/>
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
@@ -564,6 +677,10 @@
                                     <TextBlock Grid.Row="0" Text="CHANGED FILES" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" Margin="4,2,0,8"/>
                                     <ListBox Grid.Row="1" ItemsSource="{Binding CommitFiles}" SelectedItem="{Binding SelectedCommitFile}"
                                              Background="Transparent" BorderThickness="0"
+                                             VirtualizingPanel.IsVirtualizing="True"
+                                             VirtualizingPanel.VirtualizationMode="Recycling"
+                                             VirtualizingPanel.ScrollUnit="Pixel"
+                                             ScrollViewer.CanContentScroll="True"
                                              ItemContainerStyle="{StaticResource NeoListBoxItem}">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
@@ -649,6 +766,10 @@
 
                                     <ListBox Grid.Row="1" ItemsSource="{Binding StatusFiles}" SelectedItem="{Binding SelectedStatusFile}"
                                              Background="Transparent" BorderThickness="0"
+                                             VirtualizingPanel.IsVirtualizing="True"
+                                             VirtualizingPanel.VirtualizationMode="Recycling"
+                                             VirtualizingPanel.ScrollUnit="Pixel"
+                                             ScrollViewer.CanContentScroll="True"
                                              ItemContainerStyle="{StaticResource NeoListBoxItem}">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
@@ -766,6 +887,7 @@
         <Border Grid.Row="1" Style="{StaticResource NeoSunkenCard}" Padding="14,6" Margin="0,12,0,0">
             <DockPanel LastChildFill="True">
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding GpuAccelerationStatus}" Foreground="#34D399" FontSize="11" Margin="0,0,16,0"/>
                     <TextBlock Text="LibGit2Sharp Native Engine" Foreground="{StaticResource NeoTextMuted}" FontSize="11" Margin="0,0,16,0"/>
                     <TextBlock Text="UTF-8" Foreground="{StaticResource NeoTextMuted}" FontSize="11"/>
                 </StackPanel>

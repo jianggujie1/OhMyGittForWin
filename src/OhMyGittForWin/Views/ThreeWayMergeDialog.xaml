@@ -9,7 +9,12 @@
         Height="760" Width="1180"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
-        Background="{StaticResource NeoBgBrush}">
+        Background="{StaticResource NeoBgBrush}"
+        RenderOptions.ClearTypeHint="Enabled"
+        RenderOptions.BitmapScalingMode="NearestNeighbor"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        SnapsToDevicePixels="True">
 
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="56"
@@ -109,10 +114,7 @@
             <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="Transparent"/>
 
             <!-- Column 2: Result (Green Glow / Interactive) -->
-            <Border Grid.Column="2" Style="{StaticResource NeoCard}" Padding="10">
-                <Border.Effect>
-                    <DropShadowEffect Color="#10B981" BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
-                </Border.Effect>
+            <Border Grid.Column="2" Style="{StaticResource NeoCard}" Padding="10" BorderBrush="#10B981" BorderThickness="1.5">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>

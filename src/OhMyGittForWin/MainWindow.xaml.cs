@@ -50,16 +50,38 @@ public partial class MainWindow : Window
 
     private void TabLog_Click(object sender, RoutedEventArgs e)
     {
-        LogContentPanel.Visibility = Visibility.Visible;
-        CommitContentPanel.Visibility = Visibility.Collapsed;
-        ViewModel.SelectedTabIndex = 0;
+        SwitchTab(0);
     }
 
     private void TabCommit_Click(object sender, RoutedEventArgs e)
     {
-        LogContentPanel.Visibility = Visibility.Collapsed;
-        CommitContentPanel.Visibility = Visibility.Visible;
-        ViewModel.SelectedTabIndex = 1;
+        SwitchTab(1);
+    }
+
+    private void SwitchTab(int index)
+    {
+        var targetPanel = index == 0 ? LogContentPanel : CommitContentPanel;
+        var hidePanel = index == 0 ? CommitContentPanel : LogContentPanel;
+
+        if (targetPanel.Visibility == Visibility.Visible && ViewModel.SelectedTabIndex == index) return;
+
+        hidePanel.Visibility = Visibility.Collapsed;
+        targetPanel.Visibility = Visibility.Visible;
+        ViewModel.SelectedTabIndex = index;
+
+        var fadeIn = new System.Windows.Media.Animation.DoubleAnimation(0.2, 1.0, TimeSpan.FromMilliseconds(160))
+        {
+            EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+        };
+        var slideIn = new System.Windows.Media.Animation.DoubleAnimation(10.0, 0.0, TimeSpan.FromMilliseconds(160))
+        {
+            EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+        };
+
+        targetPanel.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+        var transform = new System.Windows.Media.TranslateTransform(0, 0);
+        targetPanel.RenderTransform = transform;
+        transform.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, slideIn);
     }
 
     private void BranchesListBox_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)

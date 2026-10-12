@@ -45,18 +45,23 @@
         <GradientStop Color="{StaticResource NeoAccentOrangeColor}" Offset="1.0"/>
     </LinearGradientBrush>
 
-    <!-- Soft Drop Shadows -->
-    <DropShadowEffect x:Key="NeoCardShadow" BlurRadius="22" Direction="315" ShadowDepth="8" Opacity="0.6" Color="#0B0C0F"/>
-    <DropShadowEffect x:Key="NeoButtonShadow" BlurRadius="12" Direction="315" ShadowDepth="4" Opacity="0.5" Color="#0B0C0F"/>
-    <DropShadowEffect x:Key="NeoGlowOrange" BlurRadius="18" Direction="0" ShadowDepth="0" Opacity="0.75" Color="#FF7700"/>
-    <DropShadowEffect x:Key="NeoGlowBlue" BlurRadius="16" Direction="0" ShadowDepth="0" Opacity="0.65" Color="#3B82F6"/>
+    <!-- Soft Drop Shadows (GPU-Optimized radii for 60+ FPS rendering) -->
+    <DropShadowEffect x:Key="NeoCardShadow" BlurRadius="12" Direction="315" ShadowDepth="4" Opacity="0.4" Color="#0B0C0F"/>
+    <DropShadowEffect x:Key="NeoButtonShadow" BlurRadius="6" Direction="315" ShadowDepth="2" Opacity="0.4" Color="#0B0C0F"/>
+    <DropShadowEffect x:Key="NeoGlowOrange" BlurRadius="8" Direction="0" ShadowDepth="0" Opacity="0.75" Color="#FF7700"/>
+    <DropShadowEffect x:Key="NeoGlowBlue" BlurRadius="8" Direction="0" ShadowDepth="0" Opacity="0.65" Color="#3B82F6"/>
 
-    <!-- Neo Card Style -->
+    <!-- Neo Card Style (Direct GPU Rasterization without Off-screen Target Invalidation) -->
     <Style x:Key="NeoCard" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource NeoSurfaceGradient}"/>
         <Setter Property="BorderBrush" Value="{StaticResource NeoRaisedBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1.2"/>
         <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+    </Style>
+
+    <!-- Neo Card with Shadow (for static modal dialogs) -->
+    <Style x:Key="NeoCardWithShadow" TargetType="Border" BasedOn="{StaticResource NeoCard}">
         <Setter Property="Effect" Value="{StaticResource NeoCardShadow}"/>
     </Style>
 
@@ -68,45 +73,92 @@
         <Setter Property="CornerRadius" Value="12"/>
     </Style>
 
-    <!-- Neo Button Style -->
+    <!-- Neo Button Style with Tactile 3D Micro-interactions -->
     <Style x:Key="NeoButton" TargetType="Button">
         <Setter Property="Foreground" Value="{StaticResource NeoTextPrimary}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="Padding" Value="16,8"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="btnBorder" Background="{StaticResource NeoSurfaceGradient}"
                             BorderBrush="{StaticResource NeoRaisedBorderBrush}" BorderThickness="1.2"
                             CornerRadius="12" Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True"
+                            RenderTransformOrigin="0.5,0.5"
                             Effect="{StaticResource NeoButtonShadow}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="btnScale" ScaleX="1" ScaleY="1"/>
+                                <TranslateTransform x:Name="btnTranslate" X="0" Y="0"/>
+                            </TransformGroup>
+                        </Border.RenderTransform>
+                        <Grid>
+                            <Border x:Name="hoverGlow" Background="#2C313E" CornerRadius="10" Opacity="0" IsHitTestVisible="False"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <!-- Fluid Hover Micro-interaction -->
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="btnBorder" Property="Background">
-                                <Setter.Value>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#2C313E" Offset="0.0"/>
-                                        <GradientStop Color="#222630" Offset="1.0"/>
-                                    </LinearGradientBrush>
-                                </Setter.Value>
-                            </Setter>
-                            <Setter TargetName="btnBorder" Property="BorderBrush">
-                                <Setter.Value>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#4F576A" Offset="0.0"/>
-                                        <GradientStop Color="#181A20" Offset="1.0"/>
-                                    </LinearGradientBrush>
-                                </Setter.Value>
-                            </Setter>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="btnScale" Storyboard.TargetProperty="ScaleX" To="1.025" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="btnScale" Storyboard.TargetProperty="ScaleY" To="1.025" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="btnTranslate" Storyboard.TargetProperty="Y" To="-1" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="hoverGlow" Storyboard.TargetProperty="Opacity" To="0.75" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="btnScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="btnScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="btnTranslate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="hoverGlow" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
+                        <!-- Tactile Pressed Sunk-in Micro-interaction -->
                         <Trigger Property="IsPressed" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="btnScale" Storyboard.TargetProperty="ScaleX" To="0.965" Duration="0:0:0.06"/>
+                                        <DoubleAnimation Storyboard.TargetName="btnScale" Storyboard.TargetProperty="ScaleY" To="0.965" Duration="0:0:0.06"/>
+                                        <DoubleAnimation Storyboard.TargetName="btnTranslate" Storyboard.TargetProperty="Y" To="1.2" Duration="0:0:0.06"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="btnScale" Storyboard.TargetProperty="ScaleX" To="1.025" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="btnScale" Storyboard.TargetProperty="ScaleY" To="1.025" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="btnTranslate" Storyboard.TargetProperty="Y" To="-1" Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                             <Setter TargetName="btnBorder" Property="Background" Value="{StaticResource NeoSunkenBrush}"/>
                             <Setter TargetName="btnBorder" Property="BorderBrush" Value="{StaticResource NeoSunkenBorderBrush}"/>
-                            <Setter TargetName="btnBorder" Property="Effect" Value="{x:Null}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -114,28 +166,87 @@
         </Setter>
     </Style>
 
-    <!-- Neo Primary Accent Glow Button (Orange Neon) -->
+    <!-- Neo Primary Accent Glow Button (Orange Neon with Tactile Physics) -->
     <Style x:Key="NeoPrimaryButton" TargetType="Button">
         <Setter Property="Foreground" Value="#FFFFFF"/>
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="Padding" Value="18,9"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="glowBorder" Background="{StaticResource NeoOrangeGradient}"
                             BorderBrush="#FFB066" BorderThickness="1"
                             CornerRadius="14" Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True"
+                            RenderTransformOrigin="0.5,0.5"
                             Effect="{StaticResource NeoGlowOrange}">
+                        <Border.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="glowScale" ScaleX="1" ScaleY="1"/>
+                                <TranslateTransform x:Name="glowTranslate" X="0" Y="0"/>
+                            </TransformGroup>
+                        </Border.RenderTransform>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="glowBorder" Property="Opacity" Value="0.92"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="glowScale" Storyboard.TargetProperty="ScaleX" To="1.03" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="glowScale" Storyboard.TargetProperty="ScaleY" To="1.03" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="glowTranslate" Storyboard.TargetProperty="Y" To="-1.2" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="glowBorder" Storyboard.TargetProperty="Opacity" To="0.95" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="glowScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="glowScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="glowTranslate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="glowBorder" Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.18"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="glowBorder" Property="Opacity" Value="0.8"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="glowScale" Storyboard.TargetProperty="ScaleX" To="0.96" Duration="0:0:0.06"/>
+                                        <DoubleAnimation Storyboard.TargetName="glowScale" Storyboard.TargetProperty="ScaleY" To="0.96" Duration="0:0:0.06"/>
+                                        <DoubleAnimation Storyboard.TargetName="glowTranslate" Storyboard.TargetProperty="Y" To="1.2" Duration="0:0:0.06"/>
+                                        <DoubleAnimation Storyboard.TargetName="glowBorder" Storyboard.TargetProperty="Opacity" To="0.85" Duration="0:0:0.06"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="glowScale" Storyboard.TargetProperty="ScaleX" To="1.03" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="glowScale" Storyboard.TargetProperty="ScaleY" To="1.03" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="glowTranslate" Storyboard.TargetProperty="Y" To="-1.2" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="glowBorder" Storyboard.TargetProperty="Opacity" To="0.95" Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -143,28 +254,83 @@
         </Setter>
     </Style>
 
-    <!-- Neo Secondary Accent Button (Electric Cyan/Blue) -->
+    <!-- Neo Secondary Accent Button (Electric Cyan/Blue with Tactile Physics) -->
     <Style x:Key="NeoAccentBlueButton" TargetType="Button">
         <Setter Property="Foreground" Value="#FFFFFF"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Padding" Value="14,7"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="blueBorder" Background="#2563EB"
                             BorderBrush="#60A5FA" BorderThickness="1"
                             CornerRadius="12" Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True"
+                            RenderTransformOrigin="0.5,0.5"
                             Effect="{StaticResource NeoGlowBlue}">
+                        <Border.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="blueScale" ScaleX="1" ScaleY="1"/>
+                                <TranslateTransform x:Name="blueTranslate" X="0" Y="0"/>
+                            </TransformGroup>
+                        </Border.RenderTransform>
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="blueBorder" Property="Opacity" Value="0.9"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="blueScale" Storyboard.TargetProperty="ScaleX" To="1.03" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="blueScale" Storyboard.TargetProperty="ScaleY" To="1.03" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="blueTranslate" Storyboard.TargetProperty="Y" To="-1" Duration="0:0:0.12">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="blueScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="blueScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="blueTranslate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="blueBorder" Property="Opacity" Value="0.75"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="blueScale" Storyboard.TargetProperty="ScaleX" To="0.96" Duration="0:0:0.06"/>
+                                        <DoubleAnimation Storyboard.TargetName="blueScale" Storyboard.TargetProperty="ScaleY" To="0.96" Duration="0:0:0.06"/>
+                                        <DoubleAnimation Storyboard.TargetName="blueTranslate" Storyboard.TargetProperty="Y" To="1.2" Duration="0:0:0.06"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="blueScale" Storyboard.TargetProperty="ScaleX" To="1.03" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="blueScale" Storyboard.TargetProperty="ScaleY" To="1.03" Duration="0:0:0.1"/>
+                                        <DoubleAnimation Storyboard.TargetName="blueTranslate" Storyboard.TargetProperty="Y" To="-1" Duration="0:0:0.1"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -172,7 +338,7 @@
         </Setter>
     </Style>
 
-    <!-- Neo Inset / Sunken TextBox -->
+    <!-- Neo Inset / Sunken TextBox with Focus Illumination -->
     <Style x:Key="NeoTextBox" TargetType="TextBox">
         <Setter Property="Background" Value="{StaticResource NeoSunkenBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource NeoTextPrimary}"/>
@@ -201,7 +367,7 @@
         </Setter>
     </Style>
 
-    <!-- Neo ListBoxItem Style with Hover & Selection Animations -->
+    <!-- Neo ListBoxItem Style with Fluid Hover & Selection Indicator Expansion -->
     <Style x:Key="NeoListBoxItem" TargetType="ListBoxItem">
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Background" Value="Transparent"/>
@@ -236,16 +402,21 @@
                                     CornerRadius="5" 
                                     Opacity="0"
                                     Margin="-6,-4"/>
-                            <!-- Left Active Indicator Pill -->
+                            <!-- Left Active Indicator Pill with Vertical Expansion -->
                             <Border x:Name="ActiveIndicator"
-                                    Width="3"
-                                    Height="14"
-                                    CornerRadius="1.5"
+                                    Width="3.5"
+                                    Height="16"
+                                    CornerRadius="1.75"
                                     HorizontalAlignment="Left"
                                     VerticalAlignment="Center"
                                     Margin="-4,0,0,0"
                                     Background="#38BDF8"
-                                    Opacity="0"/>
+                                    Opacity="0"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <Border.RenderTransform>
+                                    <ScaleTransform x:Name="pillScale" ScaleY="0.2"/>
+                                </Border.RenderTransform>
+                            </Border>
                             <!-- Content -->
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
@@ -253,16 +424,49 @@
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <!-- Fluid Hover Illumination Transition -->
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsMouseOver" Value="True"/>
                                 <Condition Property="IsSelected" Value="False"/>
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="HoverLayer" Property="Opacity" Value="0.85"/>
+                            <MultiTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverLayer" Storyboard.TargetProperty="Opacity" To="0.85" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.EnterActions>
+                            <MultiTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverLayer" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </MultiTrigger.ExitActions>
                         </MultiTrigger>
+                        <!-- Fluid Selection Expansion -->
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="SelectedLayer" Property="Opacity" Value="1"/>
-                            <Setter TargetName="ActiveIndicator" Property="Opacity" Value="1"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="SelectedLayer" Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.12"/>
+                                        <DoubleAnimation Storyboard.TargetName="ActiveIndicator" Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.12"/>
+                                        <DoubleAnimation Storyboard.TargetName="pillScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="SelectedLayer" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="ActiveIndicator" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.15"/>
+                                        <DoubleAnimation Storyboard.TargetName="pillScale" Storyboard.TargetProperty="ScaleY" To="0.2" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                             <Setter Property="Foreground" Value="#FFFFFF"/>
                         </Trigger>
                     </ControlTemplate.Triggers>

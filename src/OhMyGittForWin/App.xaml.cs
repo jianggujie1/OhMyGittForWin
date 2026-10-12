@@ -11,6 +11,9 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // 确保全局 Direct3D 硬件渲染加速已启用 (Tier 2)
+        System.Windows.Media.RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.Default;
+
         base.OnStartup(e);
 
         DispatcherUnhandledException += App_DispatcherUnhandledException;
