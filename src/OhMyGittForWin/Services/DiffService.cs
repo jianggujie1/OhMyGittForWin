@@ -83,19 +83,23 @@ public class DiffService
                         var curOp = (i + g) < model.OldText.Lines.Count ? model.OldText.Lines[i + g] : null;
                         var curNp = (i + g) < model.NewText.Lines.Count ? model.NewText.Lines[i + g] : null;
 
-                        unchangedHunk.LeftLines.Add(new IdeaDiffLine
+                        var leftLine = new IdeaDiffLine
                         {
                             LineNumber = curOp?.Position,
                             Text = curOp?.Text ?? string.Empty,
                             Type = ChangeType.Unchanged
-                        });
+                        };
+                        leftLine.WordPieces.Add(new IdeaWordPiece { Text = leftLine.Text, IsHighlighted = false });
+                        unchangedHunk.LeftLines.Add(leftLine);
 
-                        unchangedHunk.RightLines.Add(new IdeaDiffLine
+                        var rightLine = new IdeaDiffLine
                         {
                             LineNumber = curNp?.Position,
                             Text = curNp?.Text ?? string.Empty,
                             Type = ChangeType.Unchanged
-                        });
+                        };
+                        rightLine.WordPieces.Add(new IdeaWordPiece { Text = rightLine.Text, IsHighlighted = false });
+                        unchangedHunk.RightLines.Add(rightLine);
                     }
 
                     i += gapLength;

@@ -129,7 +129,7 @@
         <ScrollViewer x:Name="MainScrollViewer" Grid.Row="2" Background="#1E1F22"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto"
-                      CanContentScroll="True"
+                      CanContentScroll="False"
                       PreviewMouseWheel="ScrollViewer_PreviewMouseWheel">
             <ItemsControl ItemsSource="{Binding Hunks}">
                 <ItemsControl.ItemTemplate>
@@ -165,7 +165,7 @@
                                                         </ItemsControl.RenderTransform>
                                                         <ItemsControl.ItemsPanel>
                                                             <ItemsPanelTemplate>
-                                                                <VirtualizingStackPanel Orientation="Horizontal"/>
+                                                                <StackPanel Orientation="Horizontal"/>
                                                             </ItemsPanelTemplate>
                                                         </ItemsControl.ItemsPanel>
                                                         <ItemsControl.ItemTemplate>
@@ -268,7 +268,7 @@
                                                         </ItemsControl.RenderTransform>
                                                         <ItemsControl.ItemsPanel>
                                                             <ItemsPanelTemplate>
-                                                                <VirtualizingStackPanel Orientation="Horizontal"/>
+                                                                <StackPanel Orientation="Horizontal"/>
                                                             </ItemsPanelTemplate>
                                                         </ItemsControl.ItemsPanel>
                                                         <ItemsControl.ItemTemplate>

@@ -22,7 +22,8 @@ public partial class MainWindow : Window
     {
         // Auto open current directory if it is a git repo
         string currentDir = System.Environment.CurrentDirectory;
-        if (ViewModel.OpenRepositoryCommand.CanExecute(currentDir))
+        var gitService = new OhMyGittForWin.Services.GitService();
+        if (!string.IsNullOrEmpty(gitService.DiscoverRepository(currentDir)))
         {
             await ViewModel.OpenRepositoryAsync(currentDir);
         }
