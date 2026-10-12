@@ -19,7 +19,8 @@ public partial class MainViewModel : ObservableObject
     private readonly IGitService _gitService;
     private List<GitCommitItem> _allCommits = new();
     private CancellationTokenSource? _commitSelectionCts;
-    private CancellationTokenSource? _diffFileSelectionCts;
+    private CancellationTokenSource? _commitDiffCts;
+    private CancellationTokenSource? _statusDiffCts;
     private CancellationTokenSource? _filterCts;
 
     [ObservableProperty]
@@ -68,6 +69,9 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<GitCommitItem> FilteredCommits { get; } = new();
     public ObservableCollection<string> CommitFiles { get; } = new();
     public ObservableCollection<GitStatusFileItem> StatusFiles { get; } = new();
+
+    public bool IsWorkingTreeClean => StatusFiles.Count == 0;
+    public bool HasChangesToCommit => StatusFiles.Count > 0;
 
     public MainViewModel(IGitService gitService)
     {
@@ -135,18 +139,25 @@ public partial class MainViewModel : ObservableObject
                     Branches.Clear();
                     foreach (var b in branchList) Branches.Add(b);
 
+                    string? previousSelectedFilePath = SelectedStatusFile?.FilePath;
                     StatusFiles.Clear();
                     foreach (var s in statusList) StatusFiles.Add(s);
 
                     if (StatusFiles.Count > 0)
                     {
-                        SelectedStatusFile = StatusFiles[0];
+                        var match = !string.IsNullOrEmpty(previousSelectedFilePath)
+                            ? StatusFiles.FirstOrDefault(f => f.FilePath == previousSelectedFilePath)
+                            : null;
+                        SelectedStatusFile = match ?? StatusFiles[0];
                     }
                     else
                     {
                         SelectedStatusFile = null;
                         StatusIdeaDiff = null;
                     }
+
+                    OnPropertyChanged(nameof(IsWorkingTreeClean));
+                    OnPropertyChanged(nameof(HasChangesToCommit));
 
                     _allCommits = commitList;
                     ApplyCommitFilter();
@@ -232,9 +243,9 @@ public partial class MainViewModel : ObservableObject
         _commitSelectionCts?.Dispose();
         _commitSelectionCts = null;
 
-        _diffFileSelectionCts?.Cancel();
-        _diffFileSelectionCts?.Dispose();
-        _diffFileSelectionCts = null;
+        _commitDiffCts?.Cancel();
+        _commitDiffCts?.Dispose();
+        _commitDiffCts = null;
 
         CommitFiles.Clear();
         CurrentDiff = null;
@@ -297,17 +308,21 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSelectedCommitFileChanged(string? value)
     {
-        _diffFileSelectionCts?.Cancel();
-        _diffFileSelectionCts?.Dispose();
-        _diffFileSelectionCts = null;
+        _commitDiffCts?.Cancel();
+        _commitDiffCts?.Dispose();
+        _commitDiffCts = null;
 
-        if (value == null || SelectedCommit == null || string.IsNullOrWhiteSpace(RepoPath)) return;
+        if (value == null || SelectedCommit == null || string.IsNullOrWhiteSpace(RepoPath))
+        {
+            CurrentIdeaDiff = null;
+            return;
+        }
 
         var repoPath = RepoPath;
         var commitSha = SelectedCommit.Sha;
         var filePath = value;
         var cts = new CancellationTokenSource();
-        _diffFileSelectionCts = cts;
+        _commitDiffCts = cts;
 
         _ = Task.Run(() =>
         {
@@ -338,9 +353,9 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSelectedStatusFileChanged(GitStatusFileItem? value)
     {
-        _diffFileSelectionCts?.Cancel();
-        _diffFileSelectionCts?.Dispose();
-        _diffFileSelectionCts = null;
+        _statusDiffCts?.Cancel();
+        _statusDiffCts?.Dispose();
+        _statusDiffCts = null;
 
         if (value == null)
         {
@@ -358,7 +373,7 @@ public partial class MainViewModel : ObservableObject
         var filePath = value.FilePath;
         var isStaged = value.IsStaged;
         var cts = new CancellationTokenSource();
-        _diffFileSelectionCts = cts;
+        _statusDiffCts = cts;
 
         _ = Task.Run(() =>
         {

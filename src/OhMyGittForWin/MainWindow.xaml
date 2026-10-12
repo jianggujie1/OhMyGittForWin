@@ -578,9 +578,9 @@
 
                             <!-- IDEA-Style Dual-Pane Diff Viewer with Connecting Ribbons -->
                             <Grid Grid.Column="2">
-                                <views:IdeaDiffViewer DataContext="{Binding CurrentIdeaDiff}">
-                                    <views:IdeaDiffViewer.Style>
-                                        <Style TargetType="views:IdeaDiffViewer">
+                                <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
                                             <Setter Property="Visibility" Value="Visible"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding CurrentIdeaDiff}" Value="{x:Null}">
@@ -588,8 +588,9 @@
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </views:IdeaDiffViewer.Style>
-                                </views:IdeaDiffViewer>
+                                    </Grid.Style>
+                                    <views:IdeaDiffViewer DataContext="{Binding CurrentIdeaDiff}"/>
+                                </Grid>
 
                                 <Border Padding="20">
                                     <Border.Style>
@@ -682,50 +683,9 @@
 
                         <!-- Right: Live Dual-Pane Diff of Changed File -->
                         <Grid Grid.Column="2">
-                            <!-- Active Diff View (visible when StatusIdeaDiff != null) -->
-                            <Grid>
-                                <Grid.Style>
-                                    <Style TargetType="Grid">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding StatusIdeaDiff}" Value="{x:Null}">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Grid.Style>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-
-                                <DockPanel Grid.Row="0" Margin="0,0,0,8">
-                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                                        <Button Content="暂存此文件" Command="{Binding StageFileCommand}" CommandParameter="{Binding SelectedStatusFile}"
-                                                Style="{StaticResource NeoButton}" Padding="10,4" FontSize="11" Margin="0,0,6,0"/>
-                                        <Button Content="取消暂存" Command="{Binding UnstageFileCommand}" CommandParameter="{Binding SelectedStatusFile}"
-                                                Style="{StaticResource NeoButton}" Padding="10,4" FontSize="11"/>
-                                    </StackPanel>
-                                    <TextBlock Text="{Binding SelectedStatusFile.FilePath, StringFormat='CURRENT FILE: {0}'}" 
-                                               Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
-                                </DockPanel>
-
-                                <!-- Embedded Dual-Pane IDEA Diff Viewer for Uncommitted Working Changes -->
-                                <views:IdeaDiffViewer Grid.Row="1" DataContext="{Binding StatusIdeaDiff}"/>
-                            </Grid>
-
-                            <!-- Empty State: Clean Working Tree / No File Selected (visible when StatusIdeaDiff == null) -->
-                            <Border Padding="24">
-                                <Border.Style>
-                                    <Style TargetType="Border" BasedOn="{StaticResource NeoSunkenCard}">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding StatusIdeaDiff}" Value="{x:Null}">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
+                            <!-- Clean Working Tree (StatusFiles.Count == 0) -->
+                            <Border Padding="24" Style="{StaticResource NeoSunkenCard}"
+                                    Visibility="{Binding IsWorkingTreeClean, Converter={StaticResource BoolToVis}}">
                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <Border Width="64" Height="64" CornerRadius="32" Background="#1E232E" BorderBrush="#2D3545" BorderThickness="1.2"
                                             HorizontalAlignment="Center" Margin="0,0,0,16">
@@ -739,6 +699,63 @@
                                                FontSize="11" HorizontalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
+
+                            <!-- Has Changes to Commit (StatusFiles.Count > 0) -->
+                            <Grid Visibility="{Binding HasChangesToCommit, Converter={StaticResource BoolToVis}}">
+                                <!-- Active Diff View (visible when StatusIdeaDiff != null) -->
+                                <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding StatusIdeaDiff}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                            <Button Content="暂存此文件" Command="{Binding StageFileCommand}" CommandParameter="{Binding SelectedStatusFile}"
+                                                    Style="{StaticResource NeoButton}" Padding="10,4" FontSize="11" Margin="0,0,6,0"/>
+                                            <Button Content="取消暂存" Command="{Binding UnstageFileCommand}" CommandParameter="{Binding SelectedStatusFile}"
+                                                    Style="{StaticResource NeoButton}" Padding="10,4" FontSize="11"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding SelectedStatusFile.FilePath, StringFormat='CURRENT FILE: {0}'}" 
+                                                   Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                    </DockPanel>
+
+                                    <!-- Embedded Dual-Pane IDEA Diff Viewer for Uncommitted Working Changes -->
+                                    <views:IdeaDiffViewer Grid.Row="1" DataContext="{Binding StatusIdeaDiff}"/>
+                                </Grid>
+
+                                <!-- Placeholder when changed files exist, but none is selected -->
+                                <Border Padding="20">
+                                    <Border.Style>
+                                        <Style TargetType="Border" BasedOn="{StaticResource NeoSunkenCard}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding StatusIdeaDiff}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Border Width="56" Height="56" CornerRadius="28" Background="#1E232E" BorderBrush="#2D3545" BorderThickness="1.2"
+                                                HorizontalAlignment="Center" Margin="0,0,0,14">
+                                            <TextBlock Text="📝" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="请在左侧列表中选择要查看的变更文件以显示 Diff" Foreground="{StaticResource NeoTextMuted}" 
+                                                   FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
                         </Grid>
                     </Grid>
                 </Grid>

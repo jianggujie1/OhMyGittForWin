@@ -291,11 +291,12 @@ public class GitService : IGitService
         using var repo = new Repository(repoPath);
         string oldContent = string.Empty;
         string newContent = string.Empty;
+        string gitPath = relativePath.Replace('\\', '/');
 
         var headCommit = repo.Head.Tip;
         if (headCommit != null)
         {
-            var treeEntry = headCommit[relativePath];
+            var treeEntry = headCommit[gitPath];
             if (treeEntry != null && treeEntry.TargetType == TreeEntryTargetType.Blob)
             {
                 var blob = (Blob)treeEntry.Target;
@@ -321,8 +322,9 @@ public class GitService : IGitService
 
         string oldContent = string.Empty;
         string newContent = string.Empty;
+        string gitPath = relativePath.Replace('\\', '/');
 
-        var currentEntry = commit[relativePath];
+        var currentEntry = commit[gitPath];
         if (currentEntry != null && currentEntry.TargetType == TreeEntryTargetType.Blob)
         {
             newContent = ((Blob)currentEntry.Target).GetContentText();
@@ -331,7 +333,7 @@ public class GitService : IGitService
         var parent = commit.Parents.FirstOrDefault();
         if (parent != null)
         {
-            var parentEntry = parent[relativePath];
+            var parentEntry = parent[gitPath];
             if (parentEntry != null && parentEntry.TargetType == TreeEntryTargetType.Blob)
             {
                 oldContent = ((Blob)parentEntry.Target).GetContentText();
