@@ -10,4 +10,9 @@ public class GitBranchItem
     public int AheadCount { get; set; }
     public int BehindCount { get; set; }
     public required string TipSha { get; set; }
+
+    public bool HasAhead => AheadCount > 0;
+    public bool HasBehind => BehindCount > 0;
+    public bool HasSyncInfo => !IsRemote && !string.IsNullOrEmpty(UpstreamBranchName);
+    public bool IsUpToDate => HasSyncInfo && AheadCount == 0 && BehindCount == 0;
 }

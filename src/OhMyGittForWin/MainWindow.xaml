@@ -177,8 +177,33 @@
                             </StackPanel>
                         </Button>
 
-                        <Button Content="⬆ 推送 (Push)" Command="{Binding PushCommand}"
-                                Style="{StaticResource NeoPrimaryButton}" Height="32" Padding="12,0" Margin="0,0,6,0"/>
+                        <!-- Pull Button (with Behind Count Badge) -->
+                        <Button Command="{Binding PullCommand}"
+                                Style="{StaticResource NeoButton}" Height="32" Padding="12,0" Margin="0,0,6,0"
+                                ToolTip="从远程拉取并合并最新代码 (git pull)">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="⬇ 拉取 (Pull)" VerticalAlignment="Center"/>
+                                <Border Background="#0284C7" CornerRadius="8" Padding="5,1" Margin="6,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Visibility="{Binding HasBehindCommits, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding CurrentBehindCount}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                </Border>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Push Button (with Ahead Count Badge) -->
+                        <Button Command="{Binding PushCommand}"
+                                Style="{StaticResource NeoPrimaryButton}" Height="32" Padding="12,0" Margin="0,0,6,0"
+                                ToolTip="推送当前分支提交到远程仓库 (git push)">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="⬆ 推送 (Push)" VerticalAlignment="Center"/>
+                                <Border Background="#EA580C" CornerRadius="8" Padding="5,1" Margin="6,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Visibility="{Binding HasAheadCommits, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding CurrentAheadCount}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                </Border>
+                            </StackPanel>
+                        </Button>
                         <Button Content="🌐 远程管理" Command="{Binding ManageRemotesCommand}"
                                 Style="{StaticResource NeoButton}" Height="32" Padding="10,0" Margin="0,0,8,0"/>
                         <Button Content="⚡ 3-Way 冲突解决器" Click="OpenConflictResolver_Click"
@@ -284,7 +309,7 @@
                         </Border>
 
                         <!-- Branch Pill with Neon Green Indicator -->
-                        <Border Style="{StaticResource NeoSunkenCard}" Padding="10,4"
+                        <Border Style="{StaticResource NeoSunkenCard}" Padding="10,4" Margin="0,0,8,0"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <Ellipse Width="6" Height="6" Fill="#10B981" Margin="0,0,6,0">
@@ -293,6 +318,50 @@
                                     </Ellipse.Effect>
                                 </Ellipse>
                                 <TextBlock Text="{Binding CurrentBranch}" Foreground="#10B981" FontWeight="Bold" FontSize="12"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Sync Status Capsule (Ahead / Behind Counters) -->
+                        <Border Style="{StaticResource NeoSunkenCard}" Padding="8,4"
+                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                Cursor="Hand" ToolTip="{Binding SyncStatusToolTip}">
+                            <Border.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding FetchCommand}"/>
+                            </Border.InputBindings>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- Ahead Badge (Warm Neon Orange) -->
+                                <Border Background="#3D1805" BorderBrush="#F97316" BorderThickness="1" CornerRadius="6"
+                                        Padding="6,1" Margin="0,0,6,0"
+                                        Visibility="{Binding HasAheadCommits, Converter={StaticResource BoolToVis}}">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="⬆" Foreground="#FB923C" FontSize="10" FontWeight="Bold" Margin="0,0,4,0"/>
+                                        <TextBlock Text="{Binding CurrentAheadCount, StringFormat='待推送 {0}'}" Foreground="#FDBA74" FontSize="11" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Behind Badge (Sky Neon Blue) -->
+                                <Border Background="#08253B" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6"
+                                        Padding="6,1" Margin="0,0,6,0"
+                                        Visibility="{Binding HasBehindCommits, Converter={StaticResource BoolToVis}}">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="⬇" Foreground="#38BDF8" FontSize="10" FontWeight="Bold" Margin="0,0,4,0"/>
+                                        <TextBlock Text="{Binding CurrentBehindCount, StringFormat='待拉取 {0}'}" Foreground="#BAE6FD" FontSize="11" FontWeight="Bold"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Up to date (Emerald Green) -->
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                            Visibility="{Binding IsUpToDate, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="✓" Foreground="#10B981" FontWeight="Bold" FontSize="11" Margin="0,0,4,0"/>
+                                    <TextBlock Text="已与远程同步" Foreground="#10B981" FontSize="11" FontWeight="SemiBold"/>
+                                </StackPanel>
+
+                                <!-- No Upstream (Muted Slate) -->
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                            Visibility="{Binding HasNoUpstream, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="☁" Foreground="#64748B" FontSize="11" Margin="0,0,4,0"/>
+                                    <TextBlock Text="未关联远程" Foreground="#64748B" FontSize="11"/>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -358,6 +427,8 @@
                                                           Command="{Binding DataContext.CheckoutBranchCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                           CommandParameter="{Binding}" />
                                                 <Separator Background="#374151"/>
+                                                <MenuItem Header="从远程拉取此分支 (Pull)" 
+                                                          Command="{Binding DataContext.PullCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
                                                 <MenuItem Header="推送到远程 / 管理远程 (Push...)" 
                                                           Command="{Binding DataContext.ManageRemotesCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
                                                 <Separator Background="#374151"/>
@@ -380,6 +451,25 @@
                                         </Ellipse>
                                         <TextBlock Text="☁ " DockPanel.Dock="Left" Foreground="#60A5FA" FontSize="11"
                                                    Visibility="{Binding IsRemote, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center"/>
+
+                                        <!-- Ahead & Behind Badges on Right -->
+                                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="6,0,0,0">
+                                            <!-- Ahead Badge -->
+                                            <Border Background="#3D1805" BorderBrush="#F97316" BorderThickness="0.8" CornerRadius="4"
+                                                    Padding="4,1" Margin="0,0,3,0"
+                                                    Visibility="{Binding HasAhead, Converter={StaticResource BoolToVis}}"
+                                                    ToolTip="{Binding AheadCount, StringFormat='领先远程 {0} 个提交 (待推送)'}">
+                                                <TextBlock Text="{Binding AheadCount, StringFormat='↑{0}'}" Foreground="#FB923C" FontSize="10" FontWeight="Bold"/>
+                                            </Border>
+                                            <!-- Behind Badge -->
+                                            <Border Background="#08253B" BorderBrush="#38BDF8" BorderThickness="0.8" CornerRadius="4"
+                                                    Padding="4,1" Margin="0,0,3,0"
+                                                    Visibility="{Binding HasBehind, Converter={StaticResource BoolToVis}}"
+                                                    ToolTip="{Binding BehindCount, StringFormat='落后远程 {0} 个提交 (待拉取)'}">
+                                                <TextBlock Text="{Binding BehindCount, StringFormat='↓{0}'}" Foreground="#38BDF8" FontSize="10" FontWeight="Bold"/>
+                                            </Border>
+                                        </StackPanel>
+
                                         <TextBlock Text="{Binding FriendlyName}" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
                                     </DockPanel>
                                 </DataTemplate>
@@ -618,10 +708,22 @@
                                 </DataGrid.RowStyle>
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="HASH" Binding="{Binding ShortSha}" Width="90" FontWeight="Bold" Foreground="#38BDF8"/>
-                                    <DataGridTemplateColumn Header="REFS" Width="130">
+                                    <DataGridTemplateColumn Header="REFS" Width="145">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <ItemsControl ItemsSource="{Binding BranchesAndTags}">
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <!-- Unpushed Commit Badge -->
+                                                    <Border CornerRadius="6" Padding="6,2" Margin="2,0"
+                                                            Background="#431407" BorderBrush="#EA580C" BorderThickness="1"
+                                                            ToolTip="此提交尚未推送到远程仓库 (Unpushed)"
+                                                            Visibility="{Binding IsUnpushed, Converter={StaticResource BoolToVis}}">
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="⬆" Foreground="#FB923C" FontSize="10" FontWeight="Bold" Margin="0,0,3,0"/>
+                                                            <TextBlock Text="待推送" Foreground="#FDBA74" FontSize="10" FontWeight="Bold"/>
+                                                        </StackPanel>
+                                                    </Border>
+
+                                                    <ItemsControl ItemsSource="{Binding BranchesAndTags}">
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
                                                             <Border CornerRadius="6" Padding="7,2" Margin="2,0"
@@ -647,6 +749,7 @@
                                                         </ItemsPanelTemplate>
                                                     </ItemsControl.ItemsPanel>
                                                 </ItemsControl>
+                                                </StackPanel>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
@@ -791,7 +894,11 @@
                             <!-- Commit Message Box & Glowing Orange Commit Button -->
                             <Border Grid.Row="2" Style="{StaticResource NeoCard}" Padding="14">
                                 <StackPanel Orientation="Vertical">
-                                    <TextBlock Text="COMMIT MESSAGE" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" Margin="0,0,0,8"/>
+                                    <DockPanel Margin="0,0,0,8">
+                                        <TextBlock Text="COMMIT MESSAGE" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SyncStatusText, StringFormat='远程状态: {0}'}" Foreground="{StaticResource NeoAccentOrangeBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                   Visibility="{Binding HasCurrentUpstream, Converter={StaticResource BoolToVis}}"/>
+                                    </DockPanel>
                                     <TextBox Text="{Binding CommitMessage, UpdateSourceTrigger=PropertyChanged}" 
                                              Style="{StaticResource NeoTextBox}" Height="90" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,0,0,12"/>
                                     <Button Content="🚀 确认提交 (COMMIT)" Command="{Binding CommitChangesCommand}"
@@ -891,7 +998,13 @@
                     <TextBlock Text="LibGit2Sharp Native Engine" Foreground="{StaticResource NeoTextMuted}" FontSize="11" Margin="0,0,16,0"/>
                     <TextBlock Text="UTF-8" Foreground="{StaticResource NeoTextMuted}" FontSize="11"/>
                 </StackPanel>
-                <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource NeoTextSecondary}" FontSize="11" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource NeoTextSecondary}" FontSize="11" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                    <Rectangle Width="1" Height="11" Fill="#282E3B" Margin="0,0,14,0" VerticalAlignment="Center"
+                               Visibility="{Binding HasCurrentUpstream, Converter={StaticResource BoolToVis}}"/>
+                    <TextBlock Text="{Binding SyncStatusText, StringFormat='同步状态: {0}'}" Foreground="{StaticResource NeoAccentOrangeBrush}" FontSize="11" VerticalAlignment="Center"
+                               Visibility="{Binding HasCurrentUpstream, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
             </DockPanel>
         </Border>
     </Grid>

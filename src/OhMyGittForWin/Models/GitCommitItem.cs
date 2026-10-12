@@ -16,4 +16,5 @@ public class GitCommitItem
     public List<string> ParentShas { get; set; } = new();
     public List<string> BranchesAndTags { get; set; } = new();
     public bool HasRefs => BranchesAndTags.Count > 0;
+    public bool IsUnpushed { get; set; }
 }

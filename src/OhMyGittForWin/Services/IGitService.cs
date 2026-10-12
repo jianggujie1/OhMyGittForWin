@@ -9,6 +9,7 @@ public interface IGitService
     bool IsGitRepository(string path);
     string? DiscoverRepository(string path);
     (string BranchName, string? Upstream) GetCurrentBranch(string repoPath);
+    (string BranchName, string? Upstream, int AheadCount, int BehindCount) GetCurrentBranchInfo(string repoPath);
     List<GitBranchItem> GetBranches(string repoPath);
     List<GitCommitItem> GetCommitHistory(string repoPath, int limit = 300);
     List<GitStatusFileItem> GetStatus(string repoPath);
@@ -33,7 +34,9 @@ public interface IGitService
     void DeleteBranch(string repoPath, string branchName);
     (bool Success, string Output) PushBranch(string repoPath, string remoteName, string branchName, bool setUpstream = true);
     Task<(bool Success, string Output)> PushBranchAsync(string repoPath, string remoteName, string branchName, bool setUpstream = true);
-    (bool Success, string Output) Fetch(string repoPath, string remoteName = "origin");
-    Task<(bool Success, string Output)> FetchAsync(string repoPath, string remoteName = "origin");
+    (bool Success, string Output) PullBranch(string repoPath, string? remoteName = null, string? branchName = null);
+    Task<(bool Success, string Output)> PullBranchAsync(string repoPath, string? remoteName = null, string? branchName = null);
+    (bool Success, string Output) Fetch(string repoPath, string? remoteName = null);
+    Task<(bool Success, string Output)> FetchAsync(string repoPath, string? remoteName = null);
     (bool Success, string Output) DeleteRemoteBranch(string repoPath, string remoteName, string branchName);
 }

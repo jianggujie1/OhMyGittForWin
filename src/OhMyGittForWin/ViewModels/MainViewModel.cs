@@ -33,6 +33,29 @@ public partial class MainViewModel : ObservableObject
     private string _currentBranch = "-";
 
     [ObservableProperty]
+    private string? _currentUpstream;
+
+    [ObservableProperty]
+    private int _currentAheadCount;
+
+    [ObservableProperty]
+    private int _currentBehindCount;
+
+    [ObservableProperty]
+    private bool _hasCurrentUpstream;
+
+    [ObservableProperty]
+    private string _syncStatusText = "未关联远程";
+
+    [ObservableProperty]
+    private string _syncStatusToolTip = string.Empty;
+
+    public bool HasAheadCommits => CurrentAheadCount > 0;
+    public bool HasBehindCommits => CurrentBehindCount > 0;
+    public bool IsUpToDate => HasCurrentUpstream && CurrentAheadCount == 0 && CurrentBehindCount == 0;
+    public bool HasNoUpstream => !HasCurrentUpstream;
+
+    [ObservableProperty]
     private string _commitMessage = string.Empty;
 
     [ObservableProperty]
@@ -138,7 +161,7 @@ public partial class MainViewModel : ObservableObject
         {
             await Task.Run(() =>
             {
-                var (branch, _) = _gitService.GetCurrentBranch(RepoPath);
+                var (branch, upstream, ahead, behind) = _gitService.GetCurrentBranchInfo(RepoPath);
                 var branchList = _gitService.GetBranches(RepoPath);
                 var statusList = _gitService.GetStatus(RepoPath);
                 var commitList = _gitService.GetCommitHistory(RepoPath, 500);
@@ -146,6 +169,41 @@ public partial class MainViewModel : ObservableObject
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     CurrentBranch = branch;
+                    CurrentUpstream = upstream;
+                    CurrentAheadCount = ahead;
+                    CurrentBehindCount = behind;
+                    HasCurrentUpstream = !string.IsNullOrEmpty(upstream);
+
+                    if (!HasCurrentUpstream)
+                    {
+                        SyncStatusText = "未追踪远程分支";
+                        SyncStatusToolTip = "当前分支尚未建立远程追踪分支。点击【⬆ 推送 (Push)】可自动在远程创建并建立追踪关系。";
+                    }
+                    else if (ahead > 0 && behind > 0)
+                    {
+                        SyncStatusText = $"↑ {ahead} 待推送 · ↓ {behind} 待拉取";
+                        SyncStatusToolTip = $"分支已分叉！\n领先远程 {upstream} 共 {ahead} 个提交（待推送）\n落后远程 {upstream} 共 {behind} 个提交（待拉取更新）\n建议先执行【⬇ 拉取 (Pull)】合并最新代码。";
+                    }
+                    else if (ahead > 0)
+                    {
+                        SyncStatusText = $"↑ {ahead} 待推送";
+                        SyncStatusToolTip = $"当前分支领先远程 {upstream} 共 {ahead} 个提交。\n点击【⬆ 推送 (Push)】可发布到远程仓库。";
+                    }
+                    else if (behind > 0)
+                    {
+                        SyncStatusText = $"↓ {behind} 待拉取";
+                        SyncStatusToolTip = $"远程 {upstream} 有 {behind} 个新提交。\n点击【⬇ 拉取 (Pull)】可更新到本地。";
+                    }
+                    else
+                    {
+                        SyncStatusText = $"已与 {upstream} 同步";
+                        SyncStatusToolTip = $"本地分支与远程 {upstream} 保持最新同步，无需推送或拉取。\n点击可重新抓取远程 (Fetch) 检查更新。";
+                    }
+
+                    OnPropertyChanged(nameof(HasAheadCommits));
+                    OnPropertyChanged(nameof(HasBehindCommits));
+                    OnPropertyChanged(nameof(IsUpToDate));
+                    OnPropertyChanged(nameof(HasNoUpstream));
 
                     Branches.Clear();
                     foreach (var b in branchList) Branches.Add(b);
@@ -562,6 +620,99 @@ public partial class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             MessageBox.Show($"推送发生异常: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task PullAsync()
+    {
+        if (string.IsNullOrWhiteSpace(RepoPath) || !_gitService.IsGitRepository(RepoPath))
+        {
+            MessageBox.Show("请先打开一个 Git 仓库！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var remotes = _gitService.GetRemotes(RepoPath);
+        if (remotes.Count == 0)
+        {
+            MessageBox.Show("当前仓库尚未配置远程源！\n\n请先点击【🌐 远程管理】添加远程仓库。", "未配置远程仓库", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        IsLoading = true;
+        StatusMessage = $"正在从远程拉取分支 [{CurrentBranch}] 更新...";
+
+        try
+        {
+            var (success, output) = await _gitService.PullBranchAsync(RepoPath);
+            if (success)
+            {
+                StatusMessage = $"🎉 拉取完成！";
+                MessageBox.Show($"拉取成功！\n\n输出详情:\n{output}", "拉取成功", MessageBoxButton.OK, MessageBoxImage.Information);
+                await RefreshRepositoryAsync();
+            }
+            else
+            {
+                StatusMessage = $"拉取遇到提示或失败: {output}";
+                string tip = "";
+                if (output.Contains("CONFLICT", StringComparison.OrdinalIgnoreCase))
+                {
+                    tip = "\n\n⚠️ 检测到代码合并冲突！\n请点击顶部【⚡ 3-Way 冲突解决器】或查看未暂存文件进行冲突合并。";
+                }
+                MessageBox.Show($"拉取详情如下：\n\n{output}{tip}", "拉取结果", MessageBoxButton.OK, MessageBoxImage.Warning);
+                await RefreshRepositoryAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"拉取发生异常: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task FetchAsync()
+    {
+        if (string.IsNullOrWhiteSpace(RepoPath) || !_gitService.IsGitRepository(RepoPath))
+        {
+            MessageBox.Show("请先打开一个 Git 仓库！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var remotes = _gitService.GetRemotes(RepoPath);
+        if (remotes.Count == 0)
+        {
+            MessageBox.Show("当前仓库尚未配置远程源！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        IsLoading = true;
+        StatusMessage = "正在从远程抓取最新变更 (git fetch)...";
+
+        try
+        {
+            var (success, output) = await _gitService.FetchAsync(RepoPath);
+            if (success)
+            {
+                StatusMessage = "远程抓取完成，已刷新分支与同步状态！";
+                await RefreshRepositoryAsync();
+            }
+            else
+            {
+                StatusMessage = $"抓取失败: {output}";
+                MessageBox.Show($"抓取远程变更失败:\n\n{output}", "抓取失败", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"抓取异常: {ex.Message}";
         }
         finally
         {

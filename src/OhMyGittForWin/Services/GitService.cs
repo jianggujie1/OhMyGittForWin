@@ -24,11 +24,24 @@ public class GitService : IGitService
 
     public (string BranchName, string? Upstream) GetCurrentBranch(string repoPath)
     {
+        var info = GetCurrentBranchInfo(repoPath);
+        return (info.BranchName, info.Upstream);
+    }
+
+    public (string BranchName, string? Upstream, int AheadCount, int BehindCount) GetCurrentBranchInfo(string repoPath)
+    {
         using var repo = new Repository(repoPath);
         var head = repo.Head;
         string name = head?.FriendlyName ?? "(Detached)";
         string? upstream = head?.TrackedBranch?.FriendlyName;
-        return (name, upstream);
+        int ahead = 0;
+        int behind = 0;
+        if (head?.TrackingDetails != null)
+        {
+            ahead = head.TrackingDetails.AheadBy ?? 0;
+            behind = head.TrackingDetails.BehindBy ?? 0;
+        }
+        return (name, upstream, ahead, behind);
     }
 
     public List<GitBranchItem> GetBranches(string repoPath)
@@ -87,6 +100,29 @@ public class GitService : IGitService
             }
         }
 
+        // Find unpushed commits on current branch (ahead of tracked upstream)
+        var unpushedShas = new HashSet<string>();
+        var head = repo.Head;
+        if (head != null && head.TrackedBranch != null && head.Tip != null && head.TrackedBranch.Tip != null)
+        {
+            try
+            {
+                var aheadFilter = new CommitFilter
+                {
+                    IncludeReachableFrom = head.Tip,
+                    ExcludeReachableFrom = head.TrackedBranch.Tip
+                };
+                foreach (var c in repo.Commits.QueryBy(aheadFilter))
+                {
+                    unpushedShas.Add(c.Sha);
+                }
+            }
+            catch
+            {
+                // Fallback gracefully if branches have diverged
+            }
+        }
+
         var filter = new CommitFilter
         {
             SortBy = CommitSortStrategies.Topological | CommitSortStrategies.Time,
@@ -105,7 +141,8 @@ public class GitService : IGitService
                 AuthorEmail = commit.Author.Email,
                 AuthorDate = commit.Author.When,
                 ParentShas = commit.Parents.Select(p => p.Sha).ToList(),
-                BranchesAndTags = refLookup.TryGetValue(commit.Sha, out var refs) ? refs : new List<string>()
+                BranchesAndTags = refLookup.TryGetValue(commit.Sha, out var refs) ? refs : new List<string>(),
+                IsUnpushed = unpushedShas.Contains(commit.Sha)
             };
             result.Add(item);
         }
@@ -507,14 +544,28 @@ public class GitService : IGitService
         return RunGitCommandAsync(repoPath, args, 120000);
     }
 
-    public (bool Success, string Output) Fetch(string repoPath, string remoteName = "origin")
+    public (bool Success, string Output) PullBranch(string repoPath, string? remoteName = null, string? branchName = null)
+    {
+        return PullBranchAsync(repoPath, remoteName, branchName).GetAwaiter().GetResult();
+    }
+
+    public Task<(bool Success, string Output)> PullBranchAsync(string repoPath, string? remoteName = null, string? branchName = null)
+    {
+        string args = !string.IsNullOrWhiteSpace(remoteName) && !string.IsNullOrWhiteSpace(branchName)
+            ? $"pull {remoteName} {branchName}"
+            : "pull";
+        return RunGitCommandAsync(repoPath, args, 120000);
+    }
+
+    public (bool Success, string Output) Fetch(string repoPath, string? remoteName = null)
     {
         return FetchAsync(repoPath, remoteName).GetAwaiter().GetResult();
     }
 
-    public Task<(bool Success, string Output)> FetchAsync(string repoPath, string remoteName = "origin")
+    public Task<(bool Success, string Output)> FetchAsync(string repoPath, string? remoteName = null)
     {
-        return RunGitCommandAsync(repoPath, $"fetch {remoteName} --prune", 60000);
+        string args = string.IsNullOrWhiteSpace(remoteName) ? "fetch --all --prune" : $"fetch {remoteName} --prune";
+        return RunGitCommandAsync(repoPath, args, 60000);
     }
 
     public (bool Success, string Output) DeleteRemoteBranch(string repoPath, string remoteName, string branchName)
