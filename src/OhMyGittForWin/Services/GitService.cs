@@ -247,28 +247,50 @@ public class GitService : IGitService
         using var repo = new Repository(repoPath);
         string oldContent = string.Empty;
         string newContent = string.Empty;
-
+        string gitPath = relativePath.Replace('\\', '/');
         var headCommit = repo.Head.Tip;
-        if (headCommit != null)
+
+        if (isStaged)
         {
-            var treeEntry = headCommit[relativePath];
-            if (treeEntry != null && treeEntry.TargetType == TreeEntryTargetType.Blob)
+            if (headCommit != null)
             {
-                var blob = (Blob)treeEntry.Target;
-                oldContent = blob.GetContentText();
+                var treeEntry = headCommit[gitPath];
+                if (treeEntry != null && treeEntry.TargetType == TreeEntryTargetType.Blob)
+                {
+                    var blob = (Blob)treeEntry.Target;
+                    if (!blob.IsBinary) oldContent = blob.GetContentText();
+                }
+            }
+
+            var indexEntry = repo.Index[gitPath];
+            if (indexEntry != null)
+            {
+                var blob = repo.Lookup<Blob>(indexEntry.Id);
+                if (blob != null && !blob.IsBinary) newContent = blob.GetContentText();
             }
         }
-
-        string fullPath = Path.Combine(repo.Info.WorkingDirectory, relativePath);
-        if (File.Exists(fullPath))
+        else
         {
-            try
+            var indexEntry = repo.Index[gitPath];
+            if (indexEntry != null)
             {
-                newContent = File.ReadAllText(fullPath);
+                var blob = repo.Lookup<Blob>(indexEntry.Id);
+                if (blob != null && !blob.IsBinary) oldContent = blob.GetContentText();
             }
-            catch
+            else if (headCommit != null)
             {
-                newContent = string.Empty;
+                var treeEntry = headCommit[gitPath];
+                if (treeEntry != null && treeEntry.TargetType == TreeEntryTargetType.Blob)
+                {
+                    var blob = (Blob)treeEntry.Target;
+                    if (!blob.IsBinary) oldContent = blob.GetContentText();
+                }
+            }
+
+            string fullPath = Path.Combine(repo.Info.WorkingDirectory, relativePath);
+            if (File.Exists(fullPath))
+            {
+                try { newContent = File.ReadAllText(fullPath); } catch { newContent = string.Empty; }
             }
         }
 
@@ -314,8 +336,8 @@ public class GitService : IGitService
         var oldTree = parent?.Tree;
         var newTree = commit.Tree;
 
-        var patch = repo.Diff.Compare<Patch>(oldTree, newTree);
-        foreach (var change in patch)
+        var changes = repo.Diff.Compare<TreeChanges>(oldTree, newTree);
+        foreach (var change in changes)
         {
             result.Add(change.Path);
         }
@@ -331,24 +353,55 @@ public class GitService : IGitService
         string gitPath = relativePath.Replace('\\', '/');
 
         var headCommit = repo.Head.Tip;
-        if (headCommit != null)
-        {
-            var treeEntry = headCommit[gitPath];
-            if (treeEntry != null && treeEntry.TargetType == TreeEntryTargetType.Blob)
-            {
-                var blob = (Blob)treeEntry.Target;
-                oldContent = blob.GetContentText();
-            }
-        }
-
-        string fullPath = Path.Combine(repo.Info.WorkingDirectory, relativePath);
-        if (File.Exists(fullPath))
-        {
-            try { newContent = File.ReadAllText(fullPath); } catch { newContent = string.Empty; }
-        }
-
         string shortSha = headCommit != null ? headCommit.Sha.Substring(0, Math.Min(7, headCommit.Sha.Length)) : "HEAD";
-        return _diffService.BuildIdeaDiff(relativePath, oldContent, newContent, shortSha, "Current version");
+
+        if (isStaged)
+        {
+            if (headCommit != null)
+            {
+                var treeEntry = headCommit[gitPath];
+                if (treeEntry != null && treeEntry.TargetType == TreeEntryTargetType.Blob)
+                {
+                    var blob = (Blob)treeEntry.Target;
+                    if (!blob.IsBinary) oldContent = blob.GetContentText();
+                }
+            }
+
+            var indexEntry = repo.Index[gitPath];
+            if (indexEntry != null)
+            {
+                var blob = repo.Lookup<Blob>(indexEntry.Id);
+                if (blob != null && !blob.IsBinary) newContent = blob.GetContentText();
+            }
+
+            return _diffService.BuildIdeaDiff(relativePath, oldContent, newContent, $"HEAD ({shortSha})", "已暂存 (Index)");
+        }
+        else
+        {
+            var indexEntry = repo.Index[gitPath];
+            if (indexEntry != null)
+            {
+                var blob = repo.Lookup<Blob>(indexEntry.Id);
+                if (blob != null && !blob.IsBinary) oldContent = blob.GetContentText();
+            }
+            else if (headCommit != null)
+            {
+                var treeEntry = headCommit[gitPath];
+                if (treeEntry != null && treeEntry.TargetType == TreeEntryTargetType.Blob)
+                {
+                    var blob = (Blob)treeEntry.Target;
+                    if (!blob.IsBinary) oldContent = blob.GetContentText();
+                }
+            }
+
+            string fullPath = Path.Combine(repo.Info.WorkingDirectory, relativePath);
+            if (File.Exists(fullPath))
+            {
+                try { newContent = File.ReadAllText(fullPath); } catch { newContent = string.Empty; }
+            }
+
+            return _diffService.BuildIdeaDiff(relativePath, oldContent, newContent, "暂存区/HEAD", "工作区 (Working Tree)");
+        }
     }
 
     public IdeaFileDiffResult GetIdeaCommitFileDiff(string repoPath, string commitSha, string relativePath)
@@ -380,6 +433,112 @@ public class GitService : IGitService
         string leftSha = parent != null ? parent.Sha.Substring(0, Math.Min(7, parent.Sha.Length)) : "Root";
         string rightSha = commit.Sha.Substring(0, Math.Min(7, commit.Sha.Length));
         return _diffService.BuildIdeaDiff(relativePath, oldContent, newContent, leftSha, $"Commit {rightSha}");
+    }
+
+    public async Task<string> GetPendingDiffForAiAsync(string repoPath)
+    {
+        var sb = new System.Text.StringBuilder();
+
+        // 1. Check staged changes first
+        var (stagedStatSuccess, stagedStat) = await RunGitCommandAsync(repoPath, "diff --cached --stat");
+        var (stagedSuccess, stagedDiff) = await RunGitCommandAsync(repoPath, "diff --cached");
+        if (stagedSuccess && !string.IsNullOrWhiteSpace(stagedDiff))
+        {
+            sb.AppendLine("=== 已暂存的待提交代码差异 (Staged Changes) ===");
+            AppendSmartDiff(sb, stagedStat, stagedDiff);
+        }
+        else
+        {
+            // 2. If no staged changes, check unstaged changes in working tree
+            var (unstagedStatSuccess, unstagedStat) = await RunGitCommandAsync(repoPath, "diff --stat");
+            var (unstagedSuccess, unstagedDiff) = await RunGitCommandAsync(repoPath, "diff");
+            if (unstagedSuccess && !string.IsNullOrWhiteSpace(unstagedDiff))
+            {
+                sb.AppendLine("=== 工作区待提交代码差异 (Unstaged Working Tree Changes) ===");
+                AppendSmartDiff(sb, unstagedStat, unstagedDiff);
+            }
+
+            // 3. Check for untracked files
+            var (statusSuccess, statusOutput) = await RunGitCommandAsync(repoPath, "status --porcelain");
+            if (statusSuccess && !string.IsNullOrWhiteSpace(statusOutput))
+            {
+                var untracked = new List<string>();
+                using var reader = new StringReader(statusOutput);
+                string? line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (line.StartsWith("?? "))
+                    {
+                        untracked.Add(line.Substring(3).Trim());
+                    }
+                }
+
+                if (untracked.Count > 0)
+                {
+                    sb.AppendLine("\n=== 未跟踪的新增文件列表 (Untracked Files) ===");
+                    foreach (var f in untracked)
+                    {
+                        sb.AppendLine($"- [新增文件] {f}");
+                        string fullPath = Path.Combine(repoPath, f);
+                        if (File.Exists(fullPath))
+                        {
+                            try
+                            {
+                                var info = new FileInfo(fullPath);
+                                if (info.Length < 4096)
+                                {
+                                    string preview = File.ReadAllText(fullPath);
+                                    if (!string.IsNullOrWhiteSpace(preview))
+                                    {
+                                        sb.AppendLine($"  文件内容预览:\n{preview.Trim()}");
+                                    }
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+                }
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    private static void AppendSmartDiff(System.Text.StringBuilder sb, string stat, string rawDiff)
+    {
+        if (!string.IsNullOrWhiteSpace(stat))
+        {
+            sb.AppendLine("--- 变更文件概览 (Files Overview) ---");
+            sb.AppendLine(stat.Trim());
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("--- 代码差异详情 (Code Diffs) ---");
+
+        string[] fileChunks = rawDiff.Split(new[] { "diff --git " }, StringSplitOptions.RemoveEmptyEntries);
+        const int MaxCharsPerFile = 2500;
+        const int TotalMaxChars = 36000;
+
+        foreach (var chunk in fileChunks)
+        {
+            if (sb.Length >= TotalMaxChars)
+            {
+                sb.AppendLine("\n[... 其余文件差异已截断，请以上方变更文件概览为准 ...]");
+                break;
+            }
+
+            string fullChunk = "diff --git " + chunk.TrimEnd();
+            if (fullChunk.Length > MaxCharsPerFile)
+            {
+                sb.AppendLine(fullChunk.Substring(0, MaxCharsPerFile));
+                sb.AppendLine("[... 该文件其余差异已精简 ...]\n");
+            }
+            else
+            {
+                sb.AppendLine(fullChunk);
+                sb.AppendLine();
+            }
+        }
     }
 
     private static string GetGitExePath()

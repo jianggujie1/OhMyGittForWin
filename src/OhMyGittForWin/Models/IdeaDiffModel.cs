@@ -32,6 +32,13 @@ public partial class IdeaDiffHunk : ObservableObject
     [ObservableProperty]
     private bool _isIncluded = false;
 
+    [ObservableProperty]
+    private bool _isFolded = false;
+
+    public int FoldedLineCount => LeftLines.Count;
+
+    public string FoldedBannerText => $"↕ 折叠 {LeftLines.Count} 行未变更代码 ({LeftLineRangeDisplay}) · 点击展开";
+
     public bool HasDifferences => Type != ChangeType.Unchanged;
 
     // Visual dimensions for the ribbon connector
@@ -89,4 +96,5 @@ public class IdeaFileDiffResult
     public int Additions { get; set; }
     public int Deletions { get; set; }
     public int Modifications { get; set; }
+    public double MaxLineWidth { get; set; }
 }

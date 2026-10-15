@@ -31,6 +31,8 @@ public class DiffService
         int maxLines = Math.Max(model.OldText.Lines.Count, model.NewText.Lines.Count);
         if (maxLines == 0) return result;
 
+        double maxLineWidth = 0;
+
         // Gap threshold for merging micro-fragments into a single cohesive hunk (standard Git diff context is <= 6 lines)
         const int GapThreshold = 8;
 
@@ -71,39 +73,29 @@ public class DiffService
 
                 if (!isSmallGapBetweenChanges)
                 {
-                    // Genuine unchanged block
-                    var unchangedHunk = new IdeaDiffHunk
+                    const int ContextLines = 3;
+                    int leadingCount = i > 0 ? ContextLines : 0;
+                    int trailingCount = peek < maxLines ? ContextLines : 0;
+                    int middleCount = gapLength - leadingCount - trailingCount;
+
+                    if (middleCount >= 4)
                     {
-                        HunkId = hunkId++,
-                        Type = ChangeType.Unchanged
-                    };
-
-                    for (int g = 0; g < gapLength; g++)
+                        if (leadingCount > 0)
+                        {
+                            result.Hunks.Add(CreateUnchangedHunk(ref hunkId, model, i, leadingCount, false, ref maxLineWidth));
+                        }
+                        result.Hunks.Add(CreateUnchangedHunk(ref hunkId, model, i + leadingCount, middleCount, true, ref maxLineWidth));
+                        if (trailingCount > 0)
+                        {
+                            result.Hunks.Add(CreateUnchangedHunk(ref hunkId, model, i + leadingCount + middleCount, trailingCount, false, ref maxLineWidth));
+                        }
+                    }
+                    else
                     {
-                        var curOp = (i + g) < model.OldText.Lines.Count ? model.OldText.Lines[i + g] : null;
-                        var curNp = (i + g) < model.NewText.Lines.Count ? model.NewText.Lines[i + g] : null;
-
-                        var leftLine = new IdeaDiffLine
-                        {
-                            LineNumber = curOp?.Position,
-                            Text = curOp?.Text ?? string.Empty,
-                            Type = ChangeType.Unchanged
-                        };
-                        leftLine.WordPieces.Add(new IdeaWordPiece { Text = leftLine.Text, IsHighlighted = false });
-                        unchangedHunk.LeftLines.Add(leftLine);
-
-                        var rightLine = new IdeaDiffLine
-                        {
-                            LineNumber = curNp?.Position,
-                            Text = curNp?.Text ?? string.Empty,
-                            Type = ChangeType.Unchanged
-                        };
-                        rightLine.WordPieces.Add(new IdeaWordPiece { Text = rightLine.Text, IsHighlighted = false });
-                        unchangedHunk.RightLines.Add(rightLine);
+                        result.Hunks.Add(CreateUnchangedHunk(ref hunkId, model, i, gapLength, false, ref maxLineWidth));
                     }
 
                     i += gapLength;
-                    result.Hunks.Add(unchangedHunk);
                     continue;
                 }
             }
@@ -157,6 +149,9 @@ public class DiffService
                         Type = curOp.Type
                     };
 
+                    double wLeft = CalculateVisualLineWidth(leftLine.Text);
+                    if (wLeft > maxLineWidth) maxLineWidth = wLeft;
+
                     if (curOp.SubPieces != null && curOp.SubPieces.Count > 0)
                     {
                         foreach (var sp in curOp.SubPieces)
@@ -184,6 +179,9 @@ public class DiffService
                         Text = curNp.Text ?? string.Empty,
                         Type = curNp.Type
                     };
+
+                    double wRight = CalculateVisualLineWidth(rightLine.Text);
+                    if (wRight > maxLineWidth) maxLineWidth = wRight;
 
                     if (curNp.SubPieces != null && curNp.SubPieces.Count > 0)
                     {
@@ -241,7 +239,31 @@ public class DiffService
             result.Hunks.Add(changedHunk);
         }
 
+        result.MaxLineWidth = maxLineWidth;
         return result;
+    }
+
+    private static double CalculateVisualLineWidth(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return 0;
+        double width = 0;
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = text[i];
+            if (c == '\t')
+            {
+                width += 48.0; // 4-space tab in 12pt monospaced font
+            }
+            else if (c >= 0x4E00 && c <= 0x9FFF || c >= 0x3000 && c <= 0x303F || c >= 0xFF00 && c <= 0xFFEF)
+            {
+                width += 13.0; // Full-width CJK character
+            }
+            else
+            {
+                width += 7.2; // Monospace ASCII character
+            }
+        }
+        return width;
     }
 
     public FileDiffResult BuildDiff(string filePath, string oldText, string newText)
@@ -282,5 +304,46 @@ public class DiffService
         }
 
         return result;
+    }
+
+    private IdeaDiffHunk CreateUnchangedHunk(ref int hunkId, SideBySideDiffModel model, int startIndex, int count, bool isFolded, ref double maxLineWidth)
+    {
+        var hunk = new IdeaDiffHunk
+        {
+            HunkId = hunkId++,
+            Type = ChangeType.Unchanged,
+            IsFolded = isFolded
+        };
+
+        for (int offset = 0; offset < count; offset++)
+        {
+            int idx = startIndex + offset;
+            var curOp = idx < model.OldText.Lines.Count ? model.OldText.Lines[idx] : null;
+            var curNp = idx < model.NewText.Lines.Count ? model.NewText.Lines[idx] : null;
+
+            var leftText = curOp?.Text ?? string.Empty;
+            var rightText = curNp?.Text ?? string.Empty;
+
+            double wLeft = CalculateVisualLineWidth(leftText);
+            if (wLeft > maxLineWidth) maxLineWidth = wLeft;
+            double wRight = CalculateVisualLineWidth(rightText);
+            if (wRight > maxLineWidth) maxLineWidth = wRight;
+
+            hunk.LeftLines.Add(new IdeaDiffLine
+            {
+                LineNumber = curOp?.Position,
+                Text = leftText,
+                Type = ChangeType.Unchanged
+            });
+
+            hunk.RightLines.Add(new IdeaDiffLine
+            {
+                LineNumber = curNp?.Position,
+                Text = rightText,
+                Type = ChangeType.Unchanged
+            });
+        }
+
+        return hunk;
     }
 }

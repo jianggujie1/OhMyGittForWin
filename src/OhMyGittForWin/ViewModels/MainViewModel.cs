@@ -77,6 +77,12 @@ public partial class MainViewModel : ObservableObject
     private GitStatusFileItem? _selectedStatusFile;
 
     [ObservableProperty]
+    private GitStatusFileItem? _selectedStagedFile;
+
+    [ObservableProperty]
+    private GitStatusFileItem? _selectedUnstagedFile;
+
+    [ObservableProperty]
     private FileDiffResult? _currentDiff;
 
     [ObservableProperty]
@@ -88,20 +94,48 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _selectedTabIndex = 0; // 0: Log, 1: Commit
 
+    [ObservableProperty]
+    private bool _isLoadingCommitFiles = false;
+
+    [ObservableProperty]
+    private bool _isLoadingDiff = false;
+
     public ObservableCollection<GitBranchItem> Branches { get; } = new();
     public ObservableCollection<GitCommitItem> FilteredCommits { get; } = new();
     public ObservableCollection<string> CommitFiles { get; } = new();
     public ObservableCollection<GitStatusFileItem> StatusFiles { get; } = new();
+    public ObservableCollection<GitStatusFileItem> StagedFiles { get; } = new();
+    public ObservableCollection<GitStatusFileItem> UnstagedFiles { get; } = new();
 
     public bool IsWorkingTreeClean => StatusFiles.Count == 0;
     public bool HasChangesToCommit => StatusFiles.Count > 0;
+    public bool HasStagedFiles => StagedFiles.Count > 0;
+    public bool IsStagedFilesEmpty => StagedFiles.Count == 0;
+    public bool HasUnstagedFiles => UnstagedFiles.Count > 0;
+    public bool IsUnstagedFilesEmpty => UnstagedFiles.Count == 0;
+
+    private readonly IAiService _aiService;
+
+    [ObservableProperty]
+    private bool _isGeneratingAiCommit = false;
+
+    [ObservableProperty]
+    private string _aiCommitStatusText = "AI 生成";
+
+    public bool CanGenerateAiCommit => !IsGeneratingAiCommit;
+
+    partial void OnIsGeneratingAiCommitChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanGenerateAiCommit));
+    }
 
     [ObservableProperty]
     private string _gpuAccelerationStatus = string.Empty;
 
-    public MainViewModel(IGitService gitService)
+    public MainViewModel(IGitService gitService, IAiService aiService)
     {
         _gitService = gitService;
+        _aiService = aiService;
 
         int tier = (System.Windows.Media.RenderCapability.Tier >> 16);
         GpuAccelerationStatus = tier switch
@@ -112,7 +146,7 @@ public partial class MainViewModel : ObservableObject
         };
     }
 
-    public MainViewModel() : this(new GitService())
+    public MainViewModel() : this(new GitService(), new AiService())
     {
     }
 
@@ -209,24 +243,58 @@ public partial class MainViewModel : ObservableObject
                     foreach (var b in branchList) Branches.Add(b);
 
                     string? previousSelectedFilePath = SelectedStatusFile?.FilePath;
+                    bool? previousIsStaged = SelectedStatusFile?.IsStaged;
+
                     StatusFiles.Clear();
-                    foreach (var s in statusList) StatusFiles.Add(s);
+                    StagedFiles.Clear();
+                    UnstagedFiles.Clear();
+
+                    foreach (var s in statusList)
+                    {
+                        StatusFiles.Add(s);
+                        if (s.IsStaged)
+                        {
+                            StagedFiles.Add(s);
+                        }
+                        else
+                        {
+                            UnstagedFiles.Add(s);
+                        }
+                    }
+
+                    OnPropertyChanged(nameof(HasStagedFiles));
+                    OnPropertyChanged(nameof(IsStagedFilesEmpty));
+                    OnPropertyChanged(nameof(HasUnstagedFiles));
+                    OnPropertyChanged(nameof(IsUnstagedFilesEmpty));
+                    OnPropertyChanged(nameof(IsWorkingTreeClean));
+                    OnPropertyChanged(nameof(HasChangesToCommit));
 
                     if (StatusFiles.Count > 0)
                     {
-                        var match = !string.IsNullOrEmpty(previousSelectedFilePath)
-                            ? StatusFiles.FirstOrDefault(f => f.FilePath == previousSelectedFilePath)
-                            : null;
-                        SelectedStatusFile = match ?? StatusFiles[0];
+                        GitStatusFileItem? match = null;
+                        if (!string.IsNullOrEmpty(previousSelectedFilePath))
+                        {
+                            if (previousIsStaged == true)
+                            {
+                                match = StagedFiles.FirstOrDefault(f => f.FilePath == previousSelectedFilePath)
+                                        ?? UnstagedFiles.FirstOrDefault(f => f.FilePath == previousSelectedFilePath);
+                            }
+                            else
+                            {
+                                match = UnstagedFiles.FirstOrDefault(f => f.FilePath == previousSelectedFilePath)
+                                        ?? StagedFiles.FirstOrDefault(f => f.FilePath == previousSelectedFilePath);
+                            }
+                        }
+
+                        SelectedStatusFile = match ?? UnstagedFiles.FirstOrDefault() ?? StagedFiles.FirstOrDefault();
                     }
                     else
                     {
                         SelectedStatusFile = null;
+                        SelectedStagedFile = null;
+                        SelectedUnstagedFile = null;
                         StatusIdeaDiff = null;
                     }
-
-                    OnPropertyChanged(nameof(IsWorkingTreeClean));
-                    OnPropertyChanged(nameof(HasChangesToCommit));
 
                     _allCommits = commitList;
                     ApplyCommitFilter();
@@ -316,59 +384,98 @@ public partial class MainViewModel : ObservableObject
         _commitDiffCts?.Dispose();
         _commitDiffCts = null;
 
-        CommitFiles.Clear();
-        CurrentDiff = null;
-        CurrentIdeaDiff = null;
-        _selectedCommitFile = null;
-        OnPropertyChanged(nameof(SelectedCommitFile));
+        if (value == null || string.IsNullOrWhiteSpace(RepoPath))
+        {
+            CommitFiles.Clear();
+            CurrentDiff = null;
+            CurrentIdeaDiff = null;
+            _selectedCommitFile = null;
+            OnPropertyChanged(nameof(SelectedCommitFile));
+            IsLoadingCommitFiles = false;
+            IsLoadingDiff = false;
+            return;
+        }
 
-        if (value == null || string.IsNullOrWhiteSpace(RepoPath)) return;
+        // 1. Immediate UI thread state update (0ms instant response)
+        IsLoadingCommitFiles = true;
+        IsLoadingDiff = true;
 
         var repoPath = RepoPath;
         var sha = value.Sha;
         var cts = new CancellationTokenSource();
         _commitSelectionCts = cts;
 
-        _ = Task.Run(() =>
+        // 2. Two-phase asynchronous background loading: instant tree changes + debounced diff
+        _ = Task.Run(async () =>
         {
             if (cts.Token.IsCancellationRequested) return;
 
             try
             {
+                // Phase 1: Millisecond Tree comparison for changed files (<1ms, no delay needed!)
                 var files = _gitService.GetChangedFilesForCommit(repoPath, sha);
                 if (cts.Token.IsCancellationRequested) return;
 
-                IdeaFileDiffResult? firstDiff = null;
                 string? firstFile = files.FirstOrDefault();
-                if (firstFile != null)
-                {
-                    firstDiff = _gitService.GetIdeaCommitFileDiff(repoPath, sha, firstFile);
-                }
 
-                if (cts.Token.IsCancellationRequested) return;
-
-                Application.Current.Dispatcher.Invoke(() =>
+                // Dispatch Phase 1: file list is ready immediately!
+                _ = Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                 {
                     if (cts.Token.IsCancellationRequested) return;
 
                     CommitFiles.Clear();
                     foreach (var f in files) CommitFiles.Add(f);
 
-                    if (firstFile != null)
+                    _selectedCommitFile = firstFile;
+                    OnPropertyChanged(nameof(SelectedCommitFile));
+                    IsLoadingCommitFiles = false;
+                });
+
+                if (firstFile == null)
+                {
+                    // No changed files in this commit (e.g. empty commit)
+                    _ = Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                     {
-                        _selectedCommitFile = firstFile;
-                        OnPropertyChanged(nameof(SelectedCommitFile));
-                        CurrentIdeaDiff = firstDiff;
-                    }
+                        if (cts.Token.IsCancellationRequested) return;
+                        CurrentIdeaDiff = null;
+                        IsLoadingDiff = false;
+                    });
+                    return;
+                }
+
+                // 60ms debounce for Phase 2: rapidly navigating commits cancels intermediate diff calculations
+                try
+                {
+                    await Task.Delay(60, cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+
+                if (cts.Token.IsCancellationRequested) return;
+
+                // Phase 2: Compute Diff for the first file in background
+                var firstDiff = _gitService.GetIdeaCommitFileDiff(repoPath, sha, firstFile);
+                if (cts.Token.IsCancellationRequested) return;
+
+                // Dispatch Phase 2: Diff ready!
+                _ = Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+                {
+                    if (cts.Token.IsCancellationRequested) return;
+                    CurrentIdeaDiff = firstDiff;
+                    IsLoadingDiff = false;
                 });
             }
             catch (Exception ex)
             {
                 if (!cts.Token.IsCancellationRequested)
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
+                    _ = Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                     {
                         StatusMessage = $"读取提交详情失败: {ex.Message}";
+                        IsLoadingCommitFiles = false;
+                        IsLoadingDiff = false;
                     });
                 }
             }
@@ -384,8 +491,11 @@ public partial class MainViewModel : ObservableObject
         if (value == null || SelectedCommit == null || string.IsNullOrWhiteSpace(RepoPath))
         {
             CurrentIdeaDiff = null;
+            IsLoadingDiff = false;
             return;
         }
+
+        IsLoadingDiff = true;
 
         var repoPath = RepoPath;
         var commitSha = SelectedCommit.Sha;
@@ -401,42 +511,110 @@ public partial class MainViewModel : ObservableObject
                 var ideaDiff = _gitService.GetIdeaCommitFileDiff(repoPath, commitSha, filePath);
                 if (cts.Token.IsCancellationRequested) return;
 
-                Application.Current.Dispatcher.Invoke(() =>
+                _ = Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                 {
                     if (cts.Token.IsCancellationRequested) return;
                     CurrentIdeaDiff = ideaDiff;
+                    IsLoadingDiff = false;
                 });
             }
             catch (Exception ex)
             {
                 if (!cts.Token.IsCancellationRequested)
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
+                    _ = Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                     {
                         StatusMessage = $"读取 Diff 失败: {ex.Message}";
+                        IsLoadingDiff = false;
                     });
                 }
             }
         }, cts.Token);
     }
 
+    partial void OnSelectedStagedFileChanged(GitStatusFileItem? value)
+    {
+        if (value != null)
+        {
+            if (_selectedUnstagedFile != null)
+            {
+                _selectedUnstagedFile = null;
+                OnPropertyChanged(nameof(SelectedUnstagedFile));
+            }
+            SelectedStatusFile = value;
+        }
+    }
+
+    partial void OnSelectedUnstagedFileChanged(GitStatusFileItem? value)
+    {
+        if (value != null)
+        {
+            if (_selectedStagedFile != null)
+            {
+                _selectedStagedFile = null;
+                OnPropertyChanged(nameof(SelectedStagedFile));
+            }
+            SelectedStatusFile = value;
+        }
+    }
+
     partial void OnSelectedStatusFileChanged(GitStatusFileItem? value)
     {
+        if (value != null)
+        {
+            if (value.IsStaged)
+            {
+                if (_selectedStagedFile != value)
+                {
+                    _selectedStagedFile = value;
+                    OnPropertyChanged(nameof(SelectedStagedFile));
+                }
+                if (_selectedUnstagedFile != null)
+                {
+                    _selectedUnstagedFile = null;
+                    OnPropertyChanged(nameof(SelectedUnstagedFile));
+                }
+            }
+            else
+            {
+                if (_selectedUnstagedFile != value)
+                {
+                    _selectedUnstagedFile = value;
+                    OnPropertyChanged(nameof(SelectedUnstagedFile));
+                }
+                if (_selectedStagedFile != null)
+                {
+                    _selectedStagedFile = null;
+                    OnPropertyChanged(nameof(SelectedStagedFile));
+                }
+            }
+        }
+        else
+        {
+            if (_selectedStagedFile != null)
+            {
+                _selectedStagedFile = null;
+                OnPropertyChanged(nameof(SelectedStagedFile));
+            }
+            if (_selectedUnstagedFile != null)
+            {
+                _selectedUnstagedFile = null;
+                OnPropertyChanged(nameof(SelectedUnstagedFile));
+            }
+        }
+
         _statusDiffCts?.Cancel();
         _statusDiffCts?.Dispose();
         _statusDiffCts = null;
 
-        if (value == null)
+        if (value == null || string.IsNullOrWhiteSpace(RepoPath))
         {
             StatusIdeaDiff = null;
+            IsLoadingDiff = false;
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(RepoPath))
-        {
-            StatusIdeaDiff = null;
-            return;
-        }
+        IsLoadingDiff = true;
 
         var repoPath = RepoPath;
         var filePath = value.FilePath;
@@ -452,19 +630,21 @@ public partial class MainViewModel : ObservableObject
                 var ideaDiff = _gitService.GetIdeaFileDiff(repoPath, filePath, isStaged);
                 if (cts.Token.IsCancellationRequested) return;
 
-                Application.Current.Dispatcher.Invoke(() =>
+                _ = Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                 {
                     if (cts.Token.IsCancellationRequested) return;
                     StatusIdeaDiff = ideaDiff;
+                    IsLoadingDiff = false;
                 });
             }
             catch (Exception ex)
             {
                 if (!cts.Token.IsCancellationRequested)
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
+                    _ = Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                     {
                         StatusMessage = $"读取文件变更失败: {ex.Message}";
+                        IsLoadingDiff = false;
                     });
                 }
             }
@@ -472,8 +652,9 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public void StageFile(GitStatusFileItem? item)
+    public void StageFile(GitStatusFileItem? item = null)
     {
+        item ??= SelectedStatusFile;
         if (item == null || string.IsNullOrWhiteSpace(RepoPath)) return;
         try
         {
@@ -487,8 +668,9 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public void UnstageFile(GitStatusFileItem? item)
+    public void UnstageFile(GitStatusFileItem? item = null)
     {
+        item ??= SelectedStatusFile;
         if (item == null || string.IsNullOrWhiteSpace(RepoPath)) return;
         try
         {
@@ -543,17 +725,28 @@ public partial class MainViewModel : ObservableObject
 
         try
         {
-            // Auto stage checked files if none staged
-            var checkedItems = StatusFiles.Where(x => x.IsChecked).ToList();
-            if (checkedItems.Count == 0)
+            if (StagedFiles.Count == 0)
             {
-                MessageBox.Show("请勾选需要提交的文件！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+                if (UnstagedFiles.Count == 0)
+                {
+                    MessageBox.Show("当前没有检测到任何更改，无法提交！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
 
-            foreach (var item in checkedItems)
-            {
-                _gitService.StageFile(RepoPath, item.FilePath);
+                var result = MessageBox.Show(
+                    "暂存区中暂无已暂存的文件。\n\n是否将所有未暂存的文件自动加入暂存区并提交？",
+                    "暂存区为空",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    _gitService.StageAll(RepoPath);
+                }
+                else
+                {
+                    return;
+                }
             }
 
             _gitService.Commit(RepoPath, CommitMessage.Trim());
@@ -565,6 +758,86 @@ public partial class MainViewModel : ObservableObject
         {
             MessageBox.Show(ex.Message, "提交失败", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    [RelayCommand]
+    public async Task GenerateAiCommitMessageAsync()
+    {
+        if (string.IsNullOrWhiteSpace(RepoPath) || !_gitService.IsGitRepository(RepoPath))
+        {
+            MessageBox.Show("请先打开一个有效的 Git 仓库！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        if (!HasChangesToCommit)
+        {
+            MessageBox.Show("当前仓库没有检测到任何已暂存或未暂存的代码变更！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var settings = _aiService.LoadSettings();
+        bool isLocal = settings.ApiBaseUrl.Contains("localhost", StringComparison.OrdinalIgnoreCase) ||
+                       settings.ApiBaseUrl.Contains("127.0.0.1", StringComparison.OrdinalIgnoreCase);
+
+        if (!isLocal && string.IsNullOrWhiteSpace(settings.ApiKey))
+        {
+            var dialog = new AiSettingsDialog(settings, _aiService)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            if (dialog.ShowDialog() != true || string.IsNullOrWhiteSpace(settings.ApiKey))
+            {
+                return;
+            }
+        }
+
+        IsGeneratingAiCommit = true;
+        AiCommitStatusText = "提取变更中...";
+        StatusMessage = "AI 正在分析待提交的代码变更...";
+
+        try
+        {
+            string diff = await _gitService.GetPendingDiffForAiAsync(RepoPath);
+            if (string.IsNullOrWhiteSpace(diff))
+            {
+                MessageBox.Show("未能提取到有效的待提交代码差异！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                StatusMessage = "未获取到有效代码变更";
+                return;
+            }
+
+            AiCommitStatusText = "AI 思考生成中...";
+            StatusMessage = "AI 正在分析代码差异并生成 Commit Message...";
+
+            string generatedMessage = await _aiService.GenerateCommitMessageAsync(diff, settings);
+            if (string.IsNullOrWhiteSpace(generatedMessage))
+            {
+                throw new InvalidOperationException("AI 未能输出有效的提交信息正文。");
+            }
+
+            CommitMessage = generatedMessage.Trim();
+            StatusMessage = "✨ AI 提交信息已生成并填入输入框！";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"AI 生成提交信息失败：\n{ex.Message}", "AI 提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+            StatusMessage = $"AI 生成失败: {ex.Message}";
+        }
+        finally
+        {
+            IsGeneratingAiCommit = false;
+            AiCommitStatusText = "AI 生成";
+        }
+    }
+
+    [RelayCommand]
+    public void OpenAiSettings()
+    {
+        var settings = _aiService.LoadSettings();
+        var dialog = new AiSettingsDialog(settings, _aiService)
+        {
+            Owner = Application.Current.MainWindow
+        };
+        dialog.ShowDialog();
     }
 
     [RelayCommand]

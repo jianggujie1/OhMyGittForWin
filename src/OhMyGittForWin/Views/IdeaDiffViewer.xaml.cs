@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using OhMyGittForWin.Models;
 
 namespace OhMyGittForWin.Views;
@@ -106,38 +107,52 @@ public partial class IdeaDiffViewer : UserControl
         return IntPtr.Zero;
     }
 
-    private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    private ScrollViewer? _hunkScrollViewer;
+
+    private ScrollViewer? GetHunkScrollViewer()
     {
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && MaxHorizontalScroll > 0)
-        {
-            // Shift + Mouse Wheel = Synchronized horizontal scrolling
-            double delta = e.Delta < 0 ? 50.0 : -50.0;
-            HorizontalScrollValue = Math.Clamp(HorizontalScrollValue + delta, 0, MaxHorizontalScroll);
-            e.Handled = true;
-        }
+        if (_hunkScrollViewer != null) return _hunkScrollViewer;
+        if (HunkListBox == null) return null;
+        _hunkScrollViewer = FindVisualChild<ScrollViewer>(HunkListBox);
+        return _hunkScrollViewer;
     }
 
-    private static double CalculateVisualLineWidth(string text)
+    private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
     {
-        if (string.IsNullOrEmpty(text)) return 0;
-        double width = 0;
-        for (int i = 0; i < text.Length; i++)
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
         {
-            char c = text[i];
-            if (c == '\t')
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T typedChild) return typedChild;
+            var descendant = FindVisualChild<T>(child);
+            if (descendant != null) return descendant;
+        }
+        return null;
+    }
+
+    private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+        {
+            if (MaxHorizontalScroll > 0)
             {
-                width += 48.0; // 4-space tab in 12pt monospaced font
-            }
-            else if (c >= 0x4E00 && c <= 0x9FFF || c >= 0x3000 && c <= 0x303F || c >= 0xFF00 && c <= 0xFFEF)
-            {
-                width += 13.0; // Full-width CJK character
-            }
-            else
-            {
-                width += 7.2; // Monospace ASCII character
+                // Shift + Mouse Wheel = Synchronized horizontal scrolling
+                double delta = e.Delta < 0 ? 50.0 : -50.0;
+                HorizontalScrollValue = Math.Clamp(HorizontalScrollValue + delta, 0, MaxHorizontalScroll);
+                e.Handled = true;
             }
         }
-        return width;
+        else
+        {
+            var sv = GetHunkScrollViewer();
+            if (sv != null)
+            {
+                // Fluid, responsive physical pixel scrolling (66px = 3 lines of 22px each)
+                double step = -(e.Delta / 120.0) * 66.0;
+                double newOffset = Math.Clamp(sv.VerticalOffset + step, 0, sv.ScrollableHeight);
+                sv.ScrollToVerticalOffset(newOffset);
+                e.Handled = true;
+            }
+        }
     }
 
     public void UpdateHorizontalScrollExtent()
@@ -149,20 +164,8 @@ public partial class IdeaDiffViewer : UserControl
             return;
         }
 
-        double maxLineWidth = 0;
-        foreach (var hunk in result.Hunks)
-        {
-            foreach (var l in hunk.LeftLines)
-            {
-                double w = CalculateVisualLineWidth(l.Text);
-                if (w > maxLineWidth) maxLineWidth = w;
-            }
-            foreach (var l in hunk.RightLines)
-            {
-                double w = CalculateVisualLineWidth(l.Text);
-                if (w > maxLineWidth) maxLineWidth = w;
-            }
-        }
+        // Fast path: use pre-calculated MaxLineWidth from background DiffService
+        double maxLineWidth = result.MaxLineWidth;
 
         // Available width of single side code column:
         // Container width minus middle gutter (124px) minus vertical scrollbar (~18px), split in half
@@ -180,6 +183,14 @@ public partial class IdeaDiffViewer : UserControl
         if (HorizontalScrollValue > MaxHorizontalScroll)
         {
             HorizontalScrollValue = MaxHorizontalScroll;
+        }
+    }
+
+    private void FoldBanner_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is IdeaDiffHunk hunk)
+        {
+            hunk.IsFolded = !hunk.IsFolded;
         }
     }
 }

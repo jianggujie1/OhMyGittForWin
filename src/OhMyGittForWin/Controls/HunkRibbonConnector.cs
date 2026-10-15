@@ -62,6 +62,13 @@ public class HunkRibbonConnector : FrameworkElement
         ClipToBounds = true;
     }
 
+    private StreamGeometry? _cachedGeometry;
+    private double _lastWidth = -1;
+    private double _lastHeight = -1;
+    private int _lastLeftCount = -1;
+    private int _lastRightCount = -1;
+    private ChangeType _lastType = (ChangeType)(-1);
+
     protected override void OnRender(DrawingContext dc)
     {
         base.OnRender(dc);
@@ -71,6 +78,43 @@ public class HunkRibbonConnector : FrameworkElement
         double w = ActualWidth;
         double h = ActualHeight;
         if (w <= 0 || h <= 0) return;
+
+        Brush fill;
+        Pen pen;
+
+        switch (HunkType)
+        {
+            case ChangeType.Inserted:
+                fill = InsertedFill;
+                pen = InsertedPen;
+                break;
+            case ChangeType.Modified:
+                fill = ModifiedFill;
+                pen = ModifiedPen;
+                break;
+            default:
+                fill = DeletedFill;
+                pen = DeletedPen;
+                break;
+        }
+
+        // Fast path: Reuse cached geometry if dimensions and line counts haven't changed
+        if (_cachedGeometry != null &&
+            Math.Abs(w - _lastWidth) < 0.01 &&
+            Math.Abs(h - _lastHeight) < 0.01 &&
+            LeftLineCount == _lastLeftCount &&
+            RightLineCount == _lastRightCount &&
+            HunkType == _lastType)
+        {
+            dc.DrawGeometry(fill, pen, _cachedGeometry);
+            return;
+        }
+
+        _lastWidth = w;
+        _lastHeight = h;
+        _lastLeftCount = LeftLineCount;
+        _lastRightCount = RightLineCount;
+        _lastType = HunkType;
 
         double yLeftTop = 0;
         double yRightTop = 0;
@@ -128,26 +172,8 @@ public class HunkRibbonConnector : FrameworkElement
             ctx.LineTo(new Point(0, yLeftTop), true, true);
         }
         geom.Freeze();
+        _cachedGeometry = geom;
 
-        Brush fill;
-        Pen pen;
-
-        switch (HunkType)
-        {
-            case ChangeType.Inserted:
-                fill = InsertedFill;
-                pen = InsertedPen;
-                break;
-            case ChangeType.Modified:
-                fill = ModifiedFill;
-                pen = ModifiedPen;
-                break;
-            default:
-                fill = DeletedFill;
-                pen = DeletedPen;
-                break;
-        }
-
-        dc.DrawGeometry(fill, pen, geom);
+        dc.DrawGeometry(fill, pen, _cachedGeometry);
     }
 }

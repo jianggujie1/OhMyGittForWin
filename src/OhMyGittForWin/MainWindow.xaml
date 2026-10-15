@@ -34,21 +34,14 @@
         <conv:DiffTypeToColorConverter x:Key="DiffColorConv" />
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
 
-        <!-- Segmented Tab Button with Fluid Physics Interaction -->
+        <!-- Segmented Tab Button with Instant 0ms Physics Interaction -->
         <Style x:Key="NeoSegmentedTabButton" TargetType="RadioButton">
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Margin" Value="2,0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="tabBorder" CornerRadius="10" Padding="16,8" Background="Transparent"
-                                RenderTransformOrigin="0.5,0.5">
-                            <Border.RenderTransform>
-                                <TransformGroup>
-                                    <ScaleTransform x:Name="tabScale" ScaleX="1" ScaleY="1"/>
-                                    <TranslateTransform x:Name="tabTrans" Y="0"/>
-                                </TransformGroup>
-                            </Border.RenderTransform>
+                        <Border x:Name="tabBorder" CornerRadius="10" Padding="16,8" Background="Transparent">
                             <Grid>
                                 <Border x:Name="hoverBg" Background="#262A34" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
                                 <ContentPresenter x:Name="cp" TextElement.FontWeight="Bold" TextElement.FontSize="12"
@@ -62,58 +55,9 @@
                                     <Condition Property="IsMouseOver" Value="True"/>
                                     <Condition Property="IsChecked" Value="False"/>
                                 </MultiTrigger.Conditions>
-                                <MultiTrigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="hoverBg" Storyboard.TargetProperty="Opacity" To="0.75" Duration="0:0:0.12"/>
-                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleX" To="1.02" Duration="0:0:0.12">
-                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleY" To="1.02" Duration="0:0:0.12">
-                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </MultiTrigger.EnterActions>
-                                <MultiTrigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="hoverBg" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/>
-                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.18">
-                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.18">
-                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </MultiTrigger.ExitActions>
+                                <Setter TargetName="hoverBg" Property="Opacity" Value="0.75"/>
                             </MultiTrigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleX" To="1.03" Duration="0:0:0.14">
-                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleY" To="1.03" Duration="0:0:0.14">
-                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                            <DoubleAnimation Storyboard.TargetName="tabTrans" Storyboard.TargetProperty="Y" To="-0.8" Duration="0:0:0.14">
-                                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                                <Trigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleX" To="1.0" Duration="0:0:0.15"/>
-                                            <DoubleAnimation Storyboard.TargetName="tabScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.15"/>
-                                            <DoubleAnimation Storyboard.TargetName="tabTrans" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.15"/>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.ExitActions>
                                 <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource NeoSurfaceGradient}"/>
                                 <Setter TargetName="tabBorder" Property="BorderBrush" Value="{StaticResource NeoRaisedBorderBrush}"/>
                                 <Setter TargetName="tabBorder" Property="BorderThickness" Value="1"/>
@@ -309,8 +253,9 @@
                         </Border>
 
                         <!-- Branch Pill with Neon Green Indicator -->
-                        <Border Style="{StaticResource NeoSunkenCard}" Padding="10,4" Margin="0,0,8,0"
-                                WindowChrome.IsHitTestVisibleInChrome="True">
+                        <Border Style="{StaticResource NeoSunkenCard}" Padding="10,4"
+                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                ToolTip="{Binding SyncStatusToolTip}">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <Ellipse Width="6" Height="6" Fill="#10B981" Margin="0,0,6,0">
                                     <Ellipse.Effect>
@@ -318,50 +263,6 @@
                                     </Ellipse.Effect>
                                 </Ellipse>
                                 <TextBlock Text="{Binding CurrentBranch}" Foreground="#10B981" FontWeight="Bold" FontSize="12"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Sync Status Capsule (Ahead / Behind Counters) -->
-                        <Border Style="{StaticResource NeoSunkenCard}" Padding="8,4"
-                                WindowChrome.IsHitTestVisibleInChrome="True"
-                                Cursor="Hand" ToolTip="{Binding SyncStatusToolTip}">
-                            <Border.InputBindings>
-                                <MouseBinding MouseAction="LeftClick" Command="{Binding FetchCommand}"/>
-                            </Border.InputBindings>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <!-- Ahead Badge (Warm Neon Orange) -->
-                                <Border Background="#3D1805" BorderBrush="#F97316" BorderThickness="1" CornerRadius="6"
-                                        Padding="6,1" Margin="0,0,6,0"
-                                        Visibility="{Binding HasAheadCommits, Converter={StaticResource BoolToVis}}">
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="⬆" Foreground="#FB923C" FontSize="10" FontWeight="Bold" Margin="0,0,4,0"/>
-                                        <TextBlock Text="{Binding CurrentAheadCount, StringFormat='待推送 {0}'}" Foreground="#FDBA74" FontSize="11" FontWeight="Bold"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Behind Badge (Sky Neon Blue) -->
-                                <Border Background="#08253B" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="6"
-                                        Padding="6,1" Margin="0,0,6,0"
-                                        Visibility="{Binding HasBehindCommits, Converter={StaticResource BoolToVis}}">
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="⬇" Foreground="#38BDF8" FontSize="10" FontWeight="Bold" Margin="0,0,4,0"/>
-                                        <TextBlock Text="{Binding CurrentBehindCount, StringFormat='待拉取 {0}'}" Foreground="#BAE6FD" FontSize="11" FontWeight="Bold"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Up to date (Emerald Green) -->
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
-                                            Visibility="{Binding IsUpToDate, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="✓" Foreground="#10B981" FontWeight="Bold" FontSize="11" Margin="0,0,4,0"/>
-                                    <TextBlock Text="已与远程同步" Foreground="#10B981" FontSize="11" FontWeight="SemiBold"/>
-                                </StackPanel>
-
-                                <!-- No Upstream (Muted Slate) -->
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
-                                            Visibility="{Binding HasNoUpstream, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="☁" Foreground="#64748B" FontSize="11" Margin="0,0,4,0"/>
-                                    <TextBlock Text="未关联远程" Foreground="#64748B" FontSize="11"/>
-                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -631,7 +532,7 @@
                                                                     Opacity="0"
                                                                     SnapsToDevicePixels="True"/>
 
-                                                            <!-- Left Neon Pill Indicator with Expansion Animation -->
+                                                            <!-- Left Neon Pill Indicator -->
                                                             <Border x:Name="ActivePill" 
                                                                     Width="3.5" 
                                                                     Height="18" 
@@ -640,12 +541,7 @@
                                                                     VerticalAlignment="Center" 
                                                                     Margin="3,0,0,0" 
                                                                     Background="#38BDF8" 
-                                                                    Opacity="0"
-                                                                    RenderTransformOrigin="0.5,0.5">
-                                                                <Border.RenderTransform>
-                                                                    <ScaleTransform x:Name="pillScale" ScaleY="0.2"/>
-                                                                </Border.RenderTransform>
-                                                            </Border>
+                                                                    Visibility="Collapsed"/>
 
                                                             <!-- Cells Presenter -->
                                                             <DataGridCellsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
@@ -654,50 +550,19 @@
                                                         </Grid>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
-                                                        <!-- Fluid Ambient Hover Illumination -->
+                                                        <!-- Instant Ambient Hover -->
                                                         <MultiTrigger>
                                                             <MultiTrigger.Conditions>
                                                                 <Condition Property="IsMouseOver" Value="True"/>
                                                                 <Condition Property="IsSelected" Value="False"/>
                                                             </MultiTrigger.Conditions>
-                                                            <MultiTrigger.EnterActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="HoverLayer" Storyboard.TargetProperty="Opacity" To="0.9" Duration="0:0:0.1"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </MultiTrigger.EnterActions>
-                                                            <MultiTrigger.ExitActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="HoverLayer" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.16"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </MultiTrigger.ExitActions>
+                                                            <Setter TargetName="HoverLayer" Property="Opacity" Value="0.9"/>
                                                         </MultiTrigger>
 
-                                                        <!-- Fluid Selection Active Pill Expansion -->
+                                                        <!-- Instant Selection Active Pill -->
                                                         <Trigger Property="IsSelected" Value="True">
-                                                            <Trigger.EnterActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="SelectedLayer" Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.1"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="ActivePill" Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.1"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="pillScale" Storyboard.TargetProperty="ScaleY" To="1.0" Duration="0:0:0.15">
-                                                                            <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
-                                                                        </DoubleAnimation>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.EnterActions>
-                                                            <Trigger.ExitActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="SelectedLayer" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.14"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="ActivePill" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.14"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="pillScale" Storyboard.TargetProperty="ScaleY" To="0.2" Duration="0:0:0.14"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.ExitActions>
+                                                            <Setter TargetName="SelectedLayer" Property="Opacity" Value="1.0"/>
+                                                            <Setter TargetName="ActivePill" Property="Visibility" Value="Visible"/>
                                                             <Setter Property="Foreground" Value="#FFFFFF"/>
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
@@ -791,6 +656,14 @@
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                     </ListBox>
+
+                                    <!-- Loading Overlay for Commit Files -->
+                                    <Border Grid.Row="1" Background="#CC181A20" CornerRadius="6"
+                                            Visibility="{Binding IsLoadingCommitFiles, Converter={StaticResource BoolToVis}}"
+                                            IsHitTestVisible="False">
+                                        <TextBlock Text="⏳ 正在读取变更文件..." Foreground="{StaticResource NeoTextMuted}" FontSize="11"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
                                 </Grid>
                             </Border>
 
@@ -832,12 +705,21 @@
                                                    FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
+
+                                <!-- Loading Overlay for Diff -->
+                                <Border Background="#D0181A20" CornerRadius="8"
+                                        Visibility="{Binding IsLoadingDiff, Converter={StaticResource BoolToVis}}"
+                                        IsHitTestVisible="False">
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="⚡ 正在比对差异..." Foreground="#38BDF8" FontWeight="SemiBold" FontSize="13" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
                             </Grid>
                         </Grid>
                     </Grid>
 
                     <!-- Tab Content 1: Commit Window -->
-                    <Grid Grid.Row="1" x:Name="CommitContentPanel" Visibility="Collapsed">
+                    <Grid Grid.Row="1" x:Name="CommitContentPanel" Visibility="Hidden">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="380" MinWidth="260"/>
                             <ColumnDefinition Width="14"/>
@@ -852,52 +734,164 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Changed Files -->
-                            <Border Grid.Row="0" Style="{StaticResource NeoSunkenCard}" Padding="10">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="*"/>
-                                    </Grid.RowDefinitions>
-                                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
-                                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                                            <Button Content="暂存全部" Command="{Binding StageAllCommand}" Style="{StaticResource NeoButton}" Padding="8,4" FontSize="11" Margin="0,0,6,0"/>
-                                            <Button Content="取消全部" Command="{Binding UnstageAllCommand}" Style="{StaticResource NeoButton}" Padding="8,4" FontSize="11"/>
-                                        </StackPanel>
-                                        <TextBlock Text="CHANGES" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
-                                    </DockPanel>
+                            <!-- Dual Panel: Staged and Unstaged Changes -->
+                            <Grid Grid.Row="0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" MinHeight="100"/>
+                                    <RowDefinition Height="8"/>
+                                    <RowDefinition Height="*" MinHeight="100"/>
+                                </Grid.RowDefinitions>
 
-                                    <ListBox Grid.Row="1" ItemsSource="{Binding StatusFiles}" SelectedItem="{Binding SelectedStatusFile}"
-                                             Background="Transparent" BorderThickness="0"
-                                             VirtualizingPanel.IsVirtualizing="True"
-                                             VirtualizingPanel.VirtualizationMode="Recycling"
-                                             VirtualizingPanel.ScrollUnit="Pixel"
-                                             ScrollViewer.CanContentScroll="True"
-                                             ItemContainerStyle="{StaticResource NeoListBoxItem}">
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Padding="4,3" Margin="0,1" CornerRadius="6">
-                                                    <DockPanel LastChildFill="True">
-                                                        <CheckBox IsChecked="{Binding IsChecked}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                                        <Border Background="#252A36" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
-                                                            <TextBlock Text="{Binding StatusBadge}" FontWeight="Bold" FontSize="11" Foreground="#38BDF8"/>
-                                                        </Border>
-                                                        <TextBlock Text="{Binding FilePath}" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" VerticalAlignment="Center"/>
-                                                    </DockPanel>
+                                <!-- Staged Files (已暂存的更改) -->
+                                <Border Grid.Row="0" Style="{StaticResource NeoSunkenCard}" Padding="10">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Header -->
+                                        <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                                            <Button DockPanel.Dock="Right" Content="全部取消暂存" Command="{Binding UnstageAllCommand}" 
+                                                    IsEnabled="{Binding HasStagedFiles}"
+                                                    Style="{StaticResource NeoButton}" Padding="8,3" FontSize="11"/>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="已暂存的更改" Foreground="#10B981" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                                <Border Background="#132E22" BorderBrush="#10B981" BorderThickness="1" CornerRadius="8" Padding="6,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding StagedFiles.Count}" Foreground="#10B981" FontWeight="Bold" FontSize="10"/>
                                                 </Border>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
-                                </Grid>
-                            </Border>
+                                            </StackPanel>
+                                        </DockPanel>
+
+                                        <!-- Empty Placeholder -->
+                                        <Border Grid.Row="1" Visibility="{Binding IsStagedFilesEmpty, Converter={StaticResource BoolToVis}}" 
+                                                VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="暂存区为空" Foreground="{StaticResource NeoTextMuted}" FontSize="12" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="点击下方未暂存文件的 [+] 可加入暂存" Foreground="{StaticResource NeoTextSecondary}" FontSize="11" Margin="0,4,0,0" HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Staged ListBox -->
+                                        <ListBox Grid.Row="1" ItemsSource="{Binding StagedFiles}" SelectedItem="{Binding SelectedStagedFile}"
+                                                 Visibility="{Binding HasStagedFiles, Converter={StaticResource BoolToVis}}"
+                                                 Background="Transparent" BorderThickness="0"
+                                                 VirtualizingPanel.IsVirtualizing="True"
+                                                 VirtualizingPanel.VirtualizationMode="Recycling"
+                                                 VirtualizingPanel.ScrollUnit="Pixel"
+                                                 ScrollViewer.CanContentScroll="True"
+                                                 ItemContainerStyle="{StaticResource NeoListBoxItem}">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Padding="4,3" Margin="0,1" CornerRadius="6">
+                                                        <DockPanel LastChildFill="True">
+                                                            <Button DockPanel.Dock="Right" 
+                                                                    Content="−" ToolTip="取消暂存此文件"
+                                                                    Command="{Binding DataContext.UnstageFileCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    Style="{StaticResource NeoButton}"
+                                                                    Width="22" Height="22" Padding="0" Margin="4,0,0,0"
+                                                                    FontSize="13" FontWeight="Bold" Foreground="#EF4444"/>
+                                                            <Border Background="#1E232E" CornerRadius="4" Padding="6,2" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding StatusBadge}" FontWeight="Bold" FontSize="11" Foreground="{Binding StatusColor}"/>
+                                                            </Border>
+                                                            <TextBlock Text="{Binding FilePath}" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                        </DockPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Vertical Splitter between Staged and Unstaged -->
+                                <GridSplitter Grid.Row="1" Height="8" HorizontalAlignment="Stretch" VerticalAlignment="Center" Background="Transparent" Cursor="SizeNS"/>
+
+                                <!-- Unstaged Files (未暂存的更改) -->
+                                <Border Grid.Row="2" Style="{StaticResource NeoSunkenCard}" Padding="10">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Header -->
+                                        <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                                            <Button DockPanel.Dock="Right" Content="全部暂存 +" Command="{Binding StageAllCommand}" 
+                                                    IsEnabled="{Binding HasUnstagedFiles}"
+                                                    Style="{StaticResource NeoButton}" Padding="8,3" FontSize="11"/>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="未暂存的更改" Foreground="#F59E0B" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                                <Border Background="#33240D" BorderBrush="#F59E0B" BorderThickness="1" CornerRadius="8" Padding="6,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding UnstagedFiles.Count}" Foreground="#F59E0B" FontWeight="Bold" FontSize="10"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </DockPanel>
+
+                                        <!-- Empty Placeholder -->
+                                        <Border Grid.Row="1" Visibility="{Binding IsUnstagedFilesEmpty, Converter={StaticResource BoolToVis}}" 
+                                                VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <TextBlock Text="没有未暂存的更改" Foreground="{StaticResource NeoTextMuted}" FontSize="12" HorizontalAlignment="Center"/>
+                                        </Border>
+
+                                        <!-- Unstaged ListBox -->
+                                        <ListBox Grid.Row="1" ItemsSource="{Binding UnstagedFiles}" SelectedItem="{Binding SelectedUnstagedFile}"
+                                                 Visibility="{Binding HasUnstagedFiles, Converter={StaticResource BoolToVis}}"
+                                                 Background="Transparent" BorderThickness="0"
+                                                 VirtualizingPanel.IsVirtualizing="True"
+                                                 VirtualizingPanel.VirtualizationMode="Recycling"
+                                                 VirtualizingPanel.ScrollUnit="Pixel"
+                                                 ScrollViewer.CanContentScroll="True"
+                                                 ItemContainerStyle="{StaticResource NeoListBoxItem}">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Padding="4,3" Margin="0,1" CornerRadius="6">
+                                                        <DockPanel LastChildFill="True">
+                                                            <Button DockPanel.Dock="Right" 
+                                                                    Content="+" ToolTip="暂存此文件"
+                                                                    Command="{Binding DataContext.StageFileCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    Style="{StaticResource NeoButton}"
+                                                                    Width="22" Height="22" Padding="0" Margin="4,0,0,0"
+                                                                    FontSize="13" FontWeight="Bold" Foreground="#10B981"/>
+                                                            <Border Background="#1E232E" CornerRadius="4" Padding="6,2" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding StatusBadge}" FontWeight="Bold" FontSize="11" Foreground="{Binding StatusColor}"/>
+                                                            </Border>
+                                                            <TextBlock Text="{Binding FilePath}" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                        </DockPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </Grid>
+                                </Border>
+                            </Grid>
 
                             <!-- Commit Message Box & Glowing Orange Commit Button -->
                             <Border Grid.Row="2" Style="{StaticResource NeoCard}" Padding="14">
                                 <StackPanel Orientation="Vertical">
                                     <DockPanel Margin="0,0,0,8">
-                                        <TextBlock Text="COMMIT MESSAGE" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding SyncStatusText, StringFormat='远程状态: {0}'}" Foreground="{StaticResource NeoAccentOrangeBrush}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                                   Visibility="{Binding HasCurrentUpstream, Converter={StaticResource BoolToVis}}"/>
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding StagedFiles.Count, StringFormat='已暂存: {0} 个文件'}" Foreground="#10B981" FontSize="11" VerticalAlignment="Center"/>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="COMMIT MESSAGE" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                            <Button Command="{Binding GenerateAiCommitMessageCommand}"
+                                                    IsEnabled="{Binding CanGenerateAiCommit}"
+                                                    Style="{StaticResource NeoButton}"
+                                                    Background="#261E38" BorderBrush="#8B5CF6" BorderThickness="1"
+                                                    Foreground="#C4B5FD"
+                                                    Padding="8,2" Margin="0,0,6,0"
+                                                    ToolTip="智能识别待提交的代码变更，自动生成规范的 Commit Message">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="✨" FontSize="11" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="{Binding AiCommitStatusText}" FontSize="11" FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button Command="{Binding OpenAiSettingsCommand}"
+                                                    Content="⚙️" ToolTip="配置 AI 服务（API Key、模型、服务商）"
+                                                    Style="{StaticResource NeoButton}"
+                                                    Width="24" Height="22" Padding="0" FontSize="10"
+                                                    VerticalAlignment="Center"/>
+                                        </StackPanel>
                                     </DockPanel>
                                     <TextBox Text="{Binding CommitMessage, UpdateSourceTrigger=PropertyChanged}" 
                                              Style="{StaticResource NeoTextBox}" Height="90" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,0,0,12"/>
@@ -949,13 +943,42 @@
 
                                     <DockPanel Grid.Row="0" Margin="0,0,0,8">
                                         <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                                            <Button Content="暂存此文件" Command="{Binding StageFileCommand}" CommandParameter="{Binding SelectedStatusFile}"
-                                                    Style="{StaticResource NeoButton}" Padding="10,4" FontSize="11" Margin="0,0,6,0"/>
-                                            <Button Content="取消暂存" Command="{Binding UnstageFileCommand}" CommandParameter="{Binding SelectedStatusFile}"
-                                                    Style="{StaticResource NeoButton}" Padding="10,4" FontSize="11"/>
+                                            <!-- Show "Stage" when file is Unstaged -->
+                                            <Button Content="+ 暂存此文件" Command="{Binding StageFileCommand}" CommandParameter="{Binding SelectedStatusFile}"
+                                                    Padding="10,4" FontSize="11">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource NeoButton}">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding SelectedStatusFile.IsStaged}" Value="False">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <!-- Show "Unstage" when file is Staged -->
+                                            <Button Content="− 取消暂存" Command="{Binding UnstageFileCommand}" CommandParameter="{Binding SelectedStatusFile}"
+                                                    Padding="10,4" FontSize="11">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource NeoButton}">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding SelectedStatusFile.IsStaged}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding SelectedStatusFile.FilePath, StringFormat='CURRENT FILE: {0}'}" 
-                                                   Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Border Background="#1E232E" BorderBrush="{Binding SelectedStatusFile.StagedTagColor}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                                <TextBlock Text="{Binding SelectedStatusFile.StagedLabel}" Foreground="{Binding SelectedStatusFile.StagedTagColor}" FontWeight="Bold" FontSize="10"/>
+                                            </Border>
+                                            <TextBlock Text="{Binding SelectedStatusFile.FilePath}" 
+                                                       Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                        </StackPanel>
                                     </DockPanel>
 
                                     <!-- Embedded Dual-Pane IDEA Diff Viewer for Uncommitted Working Changes -->
@@ -983,6 +1006,15 @@
                                                    FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
+
+                                <!-- Loading Overlay for Diff -->
+                                <Border Background="#D0181A20" CornerRadius="8"
+                                        Visibility="{Binding IsLoadingDiff, Converter={StaticResource BoolToVis}}"
+                                        IsHitTestVisible="False">
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="⚡ 正在比对差异..." Foreground="#38BDF8" FontWeight="SemiBold" FontSize="13" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
                             </Grid>
                         </Grid>
                     </Grid>
@@ -998,13 +1030,7 @@
                     <TextBlock Text="LibGit2Sharp Native Engine" Foreground="{StaticResource NeoTextMuted}" FontSize="11" Margin="0,0,16,0"/>
                     <TextBlock Text="UTF-8" Foreground="{StaticResource NeoTextMuted}" FontSize="11"/>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource NeoTextSecondary}" FontSize="11" VerticalAlignment="Center" Margin="0,0,14,0"/>
-                    <Rectangle Width="1" Height="11" Fill="#282E3B" Margin="0,0,14,0" VerticalAlignment="Center"
-                               Visibility="{Binding HasCurrentUpstream, Converter={StaticResource BoolToVis}}"/>
-                    <TextBlock Text="{Binding SyncStatusText, StringFormat='同步状态: {0}'}" Foreground="{StaticResource NeoAccentOrangeBrush}" FontSize="11" VerticalAlignment="Center"
-                               Visibility="{Binding HasCurrentUpstream, Converter={StaticResource BoolToVis}}"/>
-                </StackPanel>
+                <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource NeoTextSecondary}" FontSize="11" VerticalAlignment="Center"/>
             </DockPanel>
         </Border>
     </Grid>

@@ -125,7 +125,7 @@
             </Grid>
         </Border>
 
-        <!-- 3. Main Hunk-based Diff Viewer with Hardware Virtualization -->
+        <!-- 3. Main Hunk-based Diff Viewer -->
         <ListBox x:Name="HunkListBox" Grid.Row="2" Background="#1E1F22"
                  BorderThickness="0"
                  ItemsSource="{Binding Hunks}"
@@ -136,24 +136,30 @@
                  VirtualizingPanel.VirtualizationMode="Recycling"
                  VirtualizingPanel.ScrollUnit="Pixel"
                  PreviewMouseWheel="ScrollViewer_PreviewMouseWheel">
-            <ListBox.ItemContainerStyle>
-                <Style TargetType="ListBoxItem">
-                    <Setter Property="Focusable" Value="False"/>
-                    <Setter Property="IsHitTestVisible" Value="True"/>
-                    <Setter Property="Padding" Value="0"/>
-                    <Setter Property="Margin" Value="0"/>
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="ListBoxItem">
-                                <ContentPresenter/>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </ListBox.ItemContainerStyle>
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <!-- A Single Diff Hunk Block: Fixed Left, Fixed 124px Gutter, Fixed Right -->
+            <ListBox.Resources>
+                <!-- 1. Folded Hunk Template (Instant 0ms, exactly 2 visual elements) -->
+                <DataTemplate x:Key="FoldedHunkTemplate">
+                    <Border Height="28" Background="#16181D" BorderBrush="#252A36" BorderThickness="0,1,0,1" Margin="0,1"
+                            Cursor="Hand" ToolTip="点击展开此段未变更代码" MouseLeftButtonUp="FoldBanner_Click">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#1E232E"/>
+                                        <Setter Property="BorderBrush" Value="#38BDF8"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="↕ " Foreground="#38BDF8" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding FoldedBannerText}" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+
+                <!-- 2. Normal Diff Hunk Template -->
+                <DataTemplate x:Key="NormalHunkTemplate">
                     <Grid Margin="0,0,0,0" ClipToBounds="True">
                         <Grid.ColumnDefinitions>
                             <!-- Column 0: Left Code Viewport (Fixed 50%) -->
@@ -186,11 +192,11 @@
                                                         <!-- Fast Path: Direct single TextBlock for Unchanged lines (90%+ of lines) -->
                                                         <TextBlock x:Name="SimpleLeftText" Text="{Binding Text}" 
                                                                    FontFamily="JetBrains Mono, Cascadia Code, Consolas" FontSize="12"
-                                                                   Foreground="#D4D4D4" VerticalAlignment="Center"
-                                                                   Visibility="Collapsed"/>
+                                                                   Foreground="#D4D4D4" VerticalAlignment="Center"/>
 
-                                                        <!-- Intra-line word piece highlighting -->
-                                                        <ItemsControl x:Name="LeftPiecesHost" ItemsSource="{Binding WordPieces}" VerticalAlignment="Center">
+                                                        <!-- Intra-line word piece highlighting (Only instantiated when highlighted) -->
+                                                        <ItemsControl x:Name="LeftPiecesHost" ItemsSource="{Binding WordPieces}" VerticalAlignment="Center"
+                                                                      Visibility="Collapsed">
                                                             <ItemsControl.ItemsPanel>
                                                                 <ItemsPanelTemplate>
                                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center"/>
@@ -206,9 +212,9 @@
                                                 </Canvas>
                                             </Border>
                                             <DataTemplate.Triggers>
-                                                <DataTrigger Binding="{Binding HasHighlights}" Value="False">
-                                                    <Setter TargetName="SimpleLeftText" Property="Visibility" Value="Visible"/>
-                                                    <Setter TargetName="LeftPiecesHost" Property="Visibility" Value="Collapsed"/>
+                                                <DataTrigger Binding="{Binding HasHighlights}" Value="True">
+                                                    <Setter TargetName="SimpleLeftText" Property="Visibility" Value="Collapsed"/>
+                                                    <Setter TargetName="LeftPiecesHost" Property="Visibility" Value="Visible"/>
                                                 </DataTrigger>
                                             </DataTemplate.Triggers>
                                         </DataTemplate>
@@ -265,10 +271,7 @@
                                             Visibility="{Binding HasDifferences, Converter={StaticResource BoolToVis}}">
                                     <Button Content="»" Width="16" Height="18" Padding="0" Margin="0,0,3,0"
                                             Background="Transparent" BorderThickness="0" Foreground="#61AFEF" FontWeight="Bold" FontSize="13"
-                                            Cursor="Hand" ToolTip="Revert / Apply change" RenderTransformOrigin="0.5,0.5">
-                                        <Button.RenderTransform>
-                                            <ScaleTransform ScaleX="1" ScaleY="1"/>
-                                        </Button.RenderTransform>
+                                            Cursor="Hand" ToolTip="Revert / Apply change">
                                         <Button.Style>
                                             <Style TargetType="Button">
                                                 <Setter Property="Template">
@@ -283,22 +286,6 @@
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter Property="Foreground" Value="#38BDF8"/>
-                                                        <Trigger.EnterActions>
-                                                            <BeginStoryboard>
-                                                                <Storyboard>
-                                                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.25" Duration="0:0:0.1"/>
-                                                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.25" Duration="0:0:0.1"/>
-                                                                </Storyboard>
-                                                            </BeginStoryboard>
-                                                        </Trigger.EnterActions>
-                                                        <Trigger.ExitActions>
-                                                            <BeginStoryboard>
-                                                                <Storyboard>
-                                                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.0" Duration="0:0:0.15"/>
-                                                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.0" Duration="0:0:0.15"/>
-                                                                </Storyboard>
-                                                            </BeginStoryboard>
-                                                        </Trigger.ExitActions>
                                                     </Trigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -344,11 +331,11 @@
                                                         <!-- Fast Path: Direct single TextBlock for Unchanged lines (90%+ of lines) -->
                                                         <TextBlock x:Name="SimpleRightText" Text="{Binding Text}" 
                                                                    FontFamily="JetBrains Mono, Cascadia Code, Consolas" FontSize="12"
-                                                                   Foreground="#D4D4D4" VerticalAlignment="Center"
-                                                                   Visibility="Collapsed"/>
+                                                                   Foreground="#D4D4D4" VerticalAlignment="Center"/>
 
-                                                        <!-- Intra-line word piece highlighting -->
-                                                        <ItemsControl x:Name="RightPiecesHost" ItemsSource="{Binding WordPieces}" VerticalAlignment="Center">
+                                                        <!-- Intra-line word piece highlighting (Only instantiated when highlighted) -->
+                                                        <ItemsControl x:Name="RightPiecesHost" ItemsSource="{Binding WordPieces}" VerticalAlignment="Center"
+                                                                      Visibility="Collapsed">
                                                             <ItemsControl.ItemsPanel>
                                                                 <ItemsPanelTemplate>
                                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center"/>
@@ -364,9 +351,9 @@
                                                 </Canvas>
                                             </Border>
                                             <DataTemplate.Triggers>
-                                                <DataTrigger Binding="{Binding HasHighlights}" Value="False">
-                                                    <Setter TargetName="SimpleRightText" Property="Visibility" Value="Visible"/>
-                                                    <Setter TargetName="RightPiecesHost" Property="Visibility" Value="Collapsed"/>
+                                                <DataTrigger Binding="{Binding HasHighlights}" Value="True">
+                                                    <Setter TargetName="SimpleRightText" Property="Visibility" Value="Collapsed"/>
+                                                    <Setter TargetName="RightPiecesHost" Property="Visibility" Value="Visible"/>
                                                 </DataTrigger>
                                             </DataTemplate.Triggers>
                                         </DataTemplate>
@@ -389,6 +376,39 @@
                             </Grid>
                         </Border>
                     </Grid>
+                </DataTemplate>
+            </ListBox.Resources>
+
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Focusable" Value="False"/>
+                    <Setter Property="IsHitTestVisible" Value="True"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Margin" Value="0"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <ContentPresenter/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <ContentControl Content="{Binding}">
+                        <ContentControl.Style>
+                            <Style TargetType="ContentControl">
+                                <Setter Property="ContentTemplate" Value="{StaticResource NormalHunkTemplate}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsFolded}" Value="True">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource FoldedHunkTemplate}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentControl.Style>
+                    </ContentControl>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>

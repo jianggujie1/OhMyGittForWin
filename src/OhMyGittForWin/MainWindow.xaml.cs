@@ -65,23 +65,11 @@ public partial class MainWindow : Window
 
         if (targetPanel.Visibility == Visibility.Visible && ViewModel.SelectedTabIndex == index) return;
 
-        hidePanel.Visibility = Visibility.Collapsed;
+        hidePanel.Visibility = Visibility.Hidden;
         targetPanel.Visibility = Visibility.Visible;
+        targetPanel.Opacity = 1.0;
+        targetPanel.RenderTransform = null;
         ViewModel.SelectedTabIndex = index;
-
-        var fadeIn = new System.Windows.Media.Animation.DoubleAnimation(0.2, 1.0, TimeSpan.FromMilliseconds(160))
-        {
-            EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
-        };
-        var slideIn = new System.Windows.Media.Animation.DoubleAnimation(10.0, 0.0, TimeSpan.FromMilliseconds(160))
-        {
-            EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
-        };
-
-        targetPanel.BeginAnimation(UIElement.OpacityProperty, fadeIn);
-        var transform = new System.Windows.Media.TranslateTransform(0, 0);
-        targetPanel.RenderTransform = transform;
-        transform.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, slideIn);
     }
 
     private void BranchesListBox_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)

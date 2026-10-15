@@ -23,6 +23,7 @@ public interface IGitService
     IdeaFileDiffResult GetIdeaFileDiff(string repoPath, string relativePath, bool isStaged);
     IdeaFileDiffResult GetIdeaCommitFileDiff(string repoPath, string commitSha, string relativePath);
     List<string> GetChangedFilesForCommit(string repoPath, string commitSha);
+    Task<string> GetPendingDiffForAiAsync(string repoPath);
 
     // Remote and branch operations
     List<GitRemoteItem> GetRemotes(string repoPath);
