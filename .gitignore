@@ -12,6 +12,8 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+[Pp]ublish/
+crash.log
 
 # Visual Studio / Rider cache
 .vs/

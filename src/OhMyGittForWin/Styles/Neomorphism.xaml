@@ -439,4 +439,40 @@
         </Setter>
     </Style>
 
+    <!-- Segmented Tab Button with Instant 0ms Physics Interaction -->
+    <Style x:Key="NeoSegmentedTabButton" TargetType="RadioButton">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Margin" Value="2,0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="tabBorder" CornerRadius="10" Padding="16,8" Background="Transparent">
+                        <Grid>
+                            <Border x:Name="hoverBg" Background="#262A34" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
+                            <ContentPresenter x:Name="cp" TextElement.FontWeight="Bold" TextElement.FontSize="12"
+                                              TextElement.Foreground="{StaticResource NeoTextSecondary}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsChecked" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="hoverBg" Property="Opacity" Value="0.75"/>
+                        </MultiTrigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource NeoSurfaceGradient}"/>
+                            <Setter TargetName="tabBorder" Property="BorderBrush" Value="{StaticResource NeoRaisedBorderBrush}"/>
+                            <Setter TargetName="tabBorder" Property="BorderThickness" Value="1"/>
+                            <Setter TargetName="tabBorder" Property="Effect" Value="{StaticResource NeoButtonShadow}"/>
+                            <Setter TargetName="cp" Property="TextElement.Foreground" Value="#FFFFFF"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

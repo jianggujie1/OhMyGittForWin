@@ -33,42 +33,6 @@
     <Window.Resources>
         <conv:DiffTypeToColorConverter x:Key="DiffColorConv" />
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-
-        <!-- Segmented Tab Button with Instant 0ms Physics Interaction -->
-        <Style x:Key="NeoSegmentedTabButton" TargetType="RadioButton">
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="2,0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="tabBorder" CornerRadius="10" Padding="16,8" Background="Transparent">
-                            <Grid>
-                                <Border x:Name="hoverBg" Background="#262A34" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
-                                <ContentPresenter x:Name="cp" TextElement.FontWeight="Bold" TextElement.FontSize="12"
-                                                  TextElement.Foreground="{StaticResource NeoTextSecondary}"
-                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <MultiTrigger>
-                                <MultiTrigger.Conditions>
-                                    <Condition Property="IsMouseOver" Value="True"/>
-                                    <Condition Property="IsChecked" Value="False"/>
-                                </MultiTrigger.Conditions>
-                                <Setter TargetName="hoverBg" Property="Opacity" Value="0.75"/>
-                            </MultiTrigger>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource NeoSurfaceGradient}"/>
-                                <Setter TargetName="tabBorder" Property="BorderBrush" Value="{StaticResource NeoRaisedBorderBrush}"/>
-                                <Setter TargetName="tabBorder" Property="BorderThickness" Value="1"/>
-                                <Setter TargetName="tabBorder" Property="Effect" Value="{StaticResource NeoButtonShadow}"/>
-                                <Setter TargetName="cp" Property="TextElement.Foreground" Value="#FFFFFF"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </Window.Resources>
 
     <Grid x:Name="RootContainer" Background="{StaticResource NeoBgBrush}">
@@ -151,7 +115,10 @@
                         <Button Content="🌐 远程管理" Command="{Binding ManageRemotesCommand}"
                                 Style="{StaticResource NeoButton}" Height="32" Padding="10,0" Margin="0,0,8,0"/>
                         <Button Content="⚡ 3-Way 冲突解决器" Click="OpenConflictResolver_Click"
-                                Style="{StaticResource NeoAccentBlueButton}" Height="32" Padding="12,0" Margin="0,0,12,0"/>
+                                Style="{StaticResource NeoAccentBlueButton}" Height="32" Padding="12,0" Margin="0,0,8,0"/>
+                        <Button Content="⚙️ 设置" Command="{Binding OpenSettingsCommand}"
+                                Style="{StaticResource NeoButton}" Height="32" Padding="12,0" Margin="0,0,12,0"
+                                ToolTip="偏好设置 (GPU 硬件加速与渲染模式、AI 提交服务等)"/>
 
                         <!-- Subtle Separator -->
                         <Rectangle Width="1" Height="22" Fill="#282E3B" Margin="0,0,6,0" VerticalAlignment="Center"/>
@@ -1026,7 +993,25 @@
         <Border Grid.Row="1" Style="{StaticResource NeoSunkenCard}" Padding="14,6" Margin="0,12,0,0">
             <DockPanel LastChildFill="True">
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding GpuAccelerationStatus}" Foreground="#34D399" FontSize="11" Margin="0,0,16,0"/>
+                    <!-- GPU Acceleration Status & Toggle Button -->
+                    <Button Command="{Binding ToggleGpuAccelerationCommand}"
+                            ToolTip="{Binding GpuAccelerationToolTip}"
+                            Background="Transparent" BorderThickness="0" Padding="4,2" Margin="0,0,12,0"
+                            Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="bd" Background="Transparent" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="bd" Property="Background" Value="#252A36"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <TextBlock Text="{Binding GpuAccelerationStatus}" Foreground="{Binding GpuAccelerationForeground}" FontSize="11" FontWeight="SemiBold"/>
+                    </Button>
                     <TextBlock Text="LibGit2Sharp Native Engine" Foreground="{StaticResource NeoTextMuted}" FontSize="11" Margin="0,0,16,0"/>
                     <TextBlock Text="UTF-8" Foreground="{StaticResource NeoTextMuted}" FontSize="11"/>
                 </StackPanel>

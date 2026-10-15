@@ -129,25 +129,57 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(CanGenerateAiCommit));
     }
 
+    private readonly ISettingsService _settingsService;
+
+    [ObservableProperty]
+    private bool _isGpuAccelerationEnabled = true;
+
     [ObservableProperty]
     private string _gpuAccelerationStatus = string.Empty;
 
-    public MainViewModel(IGitService gitService, IAiService aiService)
+    [ObservableProperty]
+    private string _gpuAccelerationToolTip = string.Empty;
+
+    [ObservableProperty]
+    private string _gpuAccelerationForeground = "#34D399";
+
+    public MainViewModel(IGitService gitService, IAiService aiService, ISettingsService settingsService)
     {
         _gitService = gitService;
         _aiService = aiService;
+        _settingsService = settingsService;
 
-        int tier = (System.Windows.Media.RenderCapability.Tier >> 16);
-        GpuAccelerationStatus = tier switch
-        {
-            2 => "⚡ GPU 加速: Tier 2 (Direct3D 硬件渲染)",
-            1 => "⚡ GPU 加速: Tier 1 (部分硬件加速)",
-            _ => "⚠️ 渲染模式: Tier 0 (软件光栅化)"
-        };
+        RefreshGpuAccelerationStatus();
     }
 
-    public MainViewModel() : this(new GitService(), new AiService())
+    public MainViewModel() : this(new GitService(), new AiService(), new SettingsService())
     {
+    }
+
+    public void RefreshGpuAccelerationStatus()
+    {
+        var settings = _settingsService.LoadSettings();
+        bool isSoftwareMode = System.Windows.Media.RenderOptions.ProcessRenderMode == System.Windows.Interop.RenderMode.SoftwareOnly;
+        IsGpuAccelerationEnabled = settings.EnableGpuAcceleration && !isSoftwareMode;
+
+        if (isSoftwareMode || !settings.EnableGpuAcceleration)
+        {
+            GpuAccelerationStatus = "🖥️ 纯软件渲染 (GPU已关闭)";
+            GpuAccelerationToolTip = "当前渲染模式: 纯软件渲染 (SoftwareOnly)\n已手动关闭 Direct3D GPU 硬件加速，由 CPU 负责界面光栅化绘制。\n适用于显卡驱动异常、黑屏闪烁、虚拟机或远程桌面环境。\n\n【点击此处】可立即重新开启 GPU 硬件加速。";
+            GpuAccelerationForeground = "#F59E0B";
+        }
+        else
+        {
+            int tier = (System.Windows.Media.RenderCapability.Tier >> 16);
+            GpuAccelerationStatus = tier switch
+            {
+                2 => "⚡ GPU 加速: Tier 2 (Direct3D 硬件渲染)",
+                1 => "⚡ GPU 加速: Tier 1 (部分硬件加速)",
+                _ => "⚠️ 渲染模式: Tier 0 (软件光栅化)"
+            };
+            GpuAccelerationToolTip = $"当前渲染模式: Direct3D 硬件加速 (Tier {tier})\n利用显卡 GPU 加速界面重绘与差异比对，降低 CPU 负载。\n\n【点击此处】可手动关闭 GPU 加速并切换为纯软件渲染。";
+            GpuAccelerationForeground = "#34D399";
+        }
     }
 
     [RelayCommand]
@@ -830,14 +862,42 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public void OpenAiSettings()
+    public void ToggleGpuAcceleration()
     {
-        var settings = _aiService.LoadSettings();
-        var dialog = new AiSettingsDialog(settings, _aiService)
+        bool targetState = !IsGpuAccelerationEnabled;
+        var settings = _settingsService.LoadSettings();
+        settings.EnableGpuAcceleration = targetState;
+        _settingsService.SaveSettings(settings);
+        _settingsService.ApplyRenderMode(targetState);
+
+        RefreshGpuAccelerationStatus();
+
+        StatusMessage = targetState
+            ? "✅ 已开启 GPU 硬件加速 (Direct3D 模式已激活)"
+            : "⚠️ 已关闭 GPU 加速，已切换为 CPU 纯软件渲染 (SoftwareOnly)";
+    }
+
+    [RelayCommand]
+    public void OpenSettings(object? param = null)
+    {
+        int initialTab = 0;
+        if (param is int tab) initialTab = tab;
+        else if (param is string str && int.TryParse(str, out int parsedTab)) initialTab = parsedTab;
+
+        var dialog = new SettingsDialog(initialTab, _settingsService, _aiService)
         {
             Owner = Application.Current.MainWindow
         };
-        dialog.ShowDialog();
+        if (dialog.ShowDialog() == true)
+        {
+            RefreshGpuAccelerationStatus();
+        }
+    }
+
+    [RelayCommand]
+    public void OpenAiSettings()
+    {
+        OpenSettings(1);
     }
 
     [RelayCommand]

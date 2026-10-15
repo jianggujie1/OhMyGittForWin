@@ -11,8 +11,30 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        // 确保全局 Direct3D 硬件渲染加速已启用 (Tier 2)
-        System.Windows.Media.RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.Default;
+        var settingsService = new Services.SettingsService();
+        var appSettings = settingsService.LoadSettings();
+
+        // 检查命令行兜底参数 (例如: --disable-gpu 或 --software-rendering 或 --enable-gpu)
+        bool? commandLineGpuOverride = null;
+        if (e.Args != null)
+        {
+            foreach (var arg in e.Args)
+            {
+                if (arg.Equals("--disable-gpu", StringComparison.OrdinalIgnoreCase) ||
+                    arg.Equals("-no-gpu", StringComparison.OrdinalIgnoreCase) ||
+                    arg.Equals("--software-rendering", StringComparison.OrdinalIgnoreCase))
+                {
+                    commandLineGpuOverride = false;
+                }
+                else if (arg.Equals("--enable-gpu", StringComparison.OrdinalIgnoreCase))
+                {
+                    commandLineGpuOverride = true;
+                }
+            }
+        }
+
+        bool enableGpu = commandLineGpuOverride ?? appSettings.EnableGpuAcceleration;
+        Services.SettingsService.ApplyGlobalRenderMode(enableGpu);
 
         base.OnStartup(e);
 

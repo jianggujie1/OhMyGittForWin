@@ -1,0 +1,237 @@
+<Window x:Class="OhMyGittForWin.Views.SettingsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="偏好设置 - OhMyGit"
+        Height="680" Width="620"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        Background="{StaticResource NeoBgBrush}">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="56"
+                      ResizeBorderThickness="4"
+                      CornerRadius="0"
+                      GlassFrameThickness="0"
+                      UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Border BorderBrush="#374151" BorderThickness="1">
+        <Grid Margin="18">
+            <Grid.RowDefinitions>
+                <!-- 0. Header -->
+                <RowDefinition Height="Auto"/>
+                <!-- 1. Tab Selector -->
+                <RowDefinition Height="Auto"/>
+                <!-- 2. Content Body -->
+                <RowDefinition Height="*"/>
+                <!-- 3. Bottom Action Bar -->
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 0. Header -->
+            <Border Grid.Row="0" Style="{StaticResource NeoCard}" Padding="16,12" Margin="0,0,0,10">
+                <DockPanel LastChildFill="True">
+                    <Button Content="✕" Click="BtnCancel_Click" DockPanel.Dock="Right" 
+                            WindowChrome.IsHitTestVisibleInChrome="True"
+                            Style="{StaticResource NeoButton}" Width="30" Height="30" Padding="0" 
+                            Foreground="{StaticResource NeoTextMuted}" VerticalAlignment="Center" ToolTip="关闭"/>
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="PREFERENCES &amp; SETTINGS" Foreground="{StaticResource NeoTextMuted}" FontWeight="Bold" FontSize="11"/>
+                        <TextBlock Text="⚙️ 应用偏好设置" Foreground="{StaticResource NeoTextPrimary}" FontSize="15" FontWeight="Bold" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- 1. Tab Selector Bar -->
+            <Border Grid.Row="1" Style="{StaticResource NeoSunkenCard}" Padding="4" Margin="0,0,0,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <RadioButton x:Name="TabGeneral" Grid.Column="0" Content="🖥️ 常规与 GPU 加速" 
+                                 Style="{StaticResource NeoSegmentedTabButton}" IsChecked="True"
+                                 Click="TabGeneral_Click" Height="36"/>
+                    <RadioButton x:Name="TabAi" Grid.Column="1" Content="🤖 AI 提交助手" 
+                                 Style="{StaticResource NeoSegmentedTabButton}"
+                                 Click="TabAi_Click" Height="36"/>
+                </Grid>
+            </Border>
+
+            <!-- 2. Content Body -->
+            <Grid Grid.Row="2" Margin="0,0,0,12">
+                <!-- Panel 0: General & GPU Acceleration -->
+                <Border x:Name="PanelGeneral" Style="{StaticResource NeoCard}" Padding="16" Visibility="Visible">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Text="渲染引擎与性能 (RENDERING &amp; GPU)" Foreground="{StaticResource NeoTextMuted}" FontSize="11" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                            <!-- GPU Acceleration Main Switch Card -->
+                            <Border Style="{StaticResource NeoSunkenCard}" Padding="14" Margin="0,0,0,12">
+                                <StackPanel Orientation="Vertical">
+                                    <CheckBox x:Name="ChkEnableGpu" Content="启用 GPU 硬件加速 (Direct3D 渲染)" 
+                                              IsChecked="True" Foreground="{StaticResource NeoTextPrimary}" 
+                                              FontWeight="Bold" FontSize="13" Margin="0,0,0,6"
+                                              Click="ChkEnableGpu_Click"/>
+                                    <TextBlock Text="默认启用。利用显卡 Direct3D 硬件渲染所有界面动效与差异比对，降低 CPU 占用并提升流畅度；关闭后全进程强制回退为 CPU 纯软件渲染 (SoftwareOnly)。" 
+                                               Foreground="{StaticResource NeoTextSecondary}" FontSize="11" TextWrapping="Wrap" LineHeight="16"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Current Hardware & Render Info -->
+                            <TextBlock Text="当前系统渲染检测信息:" Foreground="{StaticResource NeoTextMuted}" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
+                            <Border Style="{StaticResource NeoSunkenCard}" Padding="12" Margin="0,0,0,12">
+                                <StackPanel Orientation="Vertical">
+                                    <DockPanel Margin="0,0,0,6">
+                                        <TextBlock Text="当前渲染模式:" Foreground="{StaticResource NeoTextSecondary}" FontSize="12" Width="100"/>
+                                        <TextBlock x:Name="TxtCurrentRenderMode" Text="⚡ Direct3D 硬件渲染加速已启用" Foreground="#34D399" FontWeight="SemiBold" FontSize="12"/>
+                                    </DockPanel>
+                                    <DockPanel Margin="0,0,0,6">
+                                        <TextBlock Text="硬件加速能力:" Foreground="{StaticResource NeoTextSecondary}" FontSize="12" Width="100"/>
+                                        <TextBlock x:Name="TxtGpuTier" Text="Tier 2 (完全硬件加速)" Foreground="{StaticResource NeoTextPrimary}" FontSize="12"/>
+                                    </DockPanel>
+                                    <DockPanel>
+                                        <TextBlock Text="生效方式:" Foreground="{StaticResource NeoTextSecondary}" FontSize="12" Width="100"/>
+                                        <TextBlock Text="即时生效 (状态栏徽章亦支持随时一键切换)" Foreground="{StaticResource NeoTextMuted}" FontSize="12"/>
+                                    </DockPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Scenarios When to Disable GPU -->
+                            <Border Background="#1A1F2C" CornerRadius="8" Padding="12,10" Margin="0,0,0,12" BorderBrush="#2D3748" BorderThickness="1">
+                                <StackPanel Orientation="Vertical">
+                                    <TextBlock Text="💡 何时建议手动关闭 GPU 硬件加速？" Foreground="#F59E0B" FontWeight="Bold" FontSize="12" Margin="0,0,0,6"/>
+                                    <TextBlock Text="• 虚拟机环境：VMware、VirtualBox 或 Hyper-V 中 Direct3D 模拟驱动偶现花屏" Foreground="{StaticResource NeoTextSecondary}" FontSize="11" Margin="0,0,0,3"/>
+                                    <TextBlock Text="• 远程桌面 / 远控：Windows RDP、ToDesk、向日葵会话中画面不刷新或重绘滞后" Foreground="{StaticResource NeoTextSecondary}" FontSize="11" Margin="0,0,0,3"/>
+                                    <TextBlock Text="• 显卡兼容性：部分老旧核显或笔记本双显卡切换时偶发黑屏、白屏或闪退" Foreground="{StaticResource NeoTextSecondary}" FontSize="11" Margin="0,0,0,6"/>
+                                    <TextBlock Text="• 命令行应急参数：若机器因显卡驱动原因打不开程序，可通过命令行增加参数启动：OhMyGittForWin.exe --disable-gpu" Foreground="{StaticResource NeoTextMuted}" FontSize="11" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Diagnostics & Tools -->
+                            <TextBlock Text="数据与故障诊断 (DIAGNOSTICS):" Foreground="{StaticResource NeoTextMuted}" FontSize="11" FontWeight="Bold" Margin="0,4,0,6"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <Button Content="📂 打开配置目录" Click="BtnOpenAppData_Click" Style="{StaticResource NeoButton}" Padding="12,6" Margin="0,0,10,0" ToolTip="打开 %APPDATA%\OhMyGittForWin 配置文件夹"/>
+                                <Button Content="🧹 查看/清理崩溃日志" Click="BtnCleanCrashLog_Click" Style="{StaticResource NeoButton}" Padding="12,6" ToolTip="检查并清理本地 crash.log 文件"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- Panel 1: AI Assistant Configuration -->
+                <Border x:Name="PanelAi" Style="{StaticResource NeoCard}" Padding="16" Visibility="Collapsed">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Vertical">
+                            <!-- Provider Presets -->
+                            <TextBlock Text="推荐服务商预设 (选择后自动填充端点与模型):" Foreground="{StaticResource NeoTextMuted}" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
+                            <WrapPanel Margin="0,0,0,12">
+                                <RadioButton x:Name="RbDeepSeek" Content="🌟 DeepSeek (推荐)" Checked="ProviderPreset_Checked" Margin="0,0,12,6" Foreground="{StaticResource NeoTextPrimary}" IsChecked="True"/>
+                                <RadioButton x:Name="RbNvidia" Content="🟢 NVIDIA NIM" Checked="ProviderPreset_Checked" Margin="0,0,12,6" Foreground="{StaticResource NeoTextPrimary}"/>
+                                <RadioButton x:Name="RbOpenAI" Content="⚡ OpenAI" Checked="ProviderPreset_Checked" Margin="0,0,12,6" Foreground="{StaticResource NeoTextPrimary}"/>
+                                <RadioButton x:Name="RbSiliconFlow" Content="🚀 硅基流动" Checked="ProviderPreset_Checked" Margin="0,0,12,6" Foreground="{StaticResource NeoTextPrimary}"/>
+                                <RadioButton x:Name="RbOllama" Content="🦙 Ollama (本地免Key)" Checked="ProviderPreset_Checked" Margin="0,0,12,6" Foreground="{StaticResource NeoTextPrimary}"/>
+                                <RadioButton x:Name="RbCustom" Content="🛠️ 自定义" Checked="ProviderPreset_Checked" Margin="0,0,12,6" Foreground="{StaticResource NeoTextPrimary}"/>
+                            </WrapPanel>
+
+                            <!-- API Key -->
+                            <TextBlock Text="API Key (密钥):" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" Margin="0,0,0,4"/>
+                            <TextBox x:Name="TxtApiKey" Style="{StaticResource NeoTextBox}" Height="34" Padding="8,6" Margin="0,0,0,10"
+                                     ToolTip="填写大模型提供商的 API Key (例如 sk-...)，Ollama 本地可留空"/>
+
+                            <!-- API Base URL -->
+                            <TextBlock Text="API 端点地址 (Base URL):" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" Margin="0,0,0,4"/>
+                            <TextBox x:Name="TxtApiBaseUrl" Style="{StaticResource NeoTextBox}" Height="34" Padding="8,6" Margin="0,0,0,10"
+                                     ToolTip="兼容 OpenAI /v1/chat/completions 规范的 Base URL"/>
+
+                            <!-- Model Name -->
+                            <TextBlock Text="模型名称 (Model):" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" Margin="0,0,0,4"/>
+                            <TextBox x:Name="TxtModelName" Style="{StaticResource NeoTextBox}" Height="34" Padding="8,6" Margin="0,0,0,10"
+                                     ToolTip="例如 deepseek-chat, gpt-4o-mini, qwen2.5:7b 等"/>
+
+                            <!-- Options Row 1 -->
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="生成风格:" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" Margin="0,0,0,4"/>
+                                    <ComboBox x:Name="CmbPromptStyle" Height="34" Background="#1E232E" Foreground="{StaticResource NeoTextPrimary}" BorderBrush="#374151">
+                                        <ComboBoxItem Content="Conventional Commits (推荐)" IsSelected="True"/>
+                                        <ComboBoxItem Content="简洁单行"/>
+                                        <ComboBoxItem Content="详细要点"/>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="语言偏好:" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" Margin="0,0,0,4"/>
+                                    <ComboBox x:Name="CmbLanguage" Height="34" Background="#1E232E" Foreground="{StaticResource NeoTextPrimary}" BorderBrush="#374151">
+                                        <ComboBoxItem Content="中文" IsSelected="True"/>
+                                        <ComboBoxItem Content="English"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Options Row 2: Timeout & MaxTokens -->
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="请求超时时间 (Timeout):" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" Margin="0,0,0,4"/>
+                                    <ComboBox x:Name="CmbTimeout" Height="34" Background="#1E232E" Foreground="{StaticResource NeoTextPrimary}" BorderBrush="#374151">
+                                        <ComboBoxItem Tag="60" Content="60 秒 (1 分钟)"/>
+                                        <ComboBoxItem Tag="120" Content="120 秒 (2 分钟)"/>
+                                        <ComboBoxItem Tag="180" Content="180 秒 (3 分钟 - 推荐海外模型)" IsSelected="True"/>
+                                        <ComboBoxItem Tag="300" Content="300 秒 (5 分钟 - 超长等待)"/>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Token 上限 (Max Tokens):" Foreground="{StaticResource NeoTextPrimary}" FontSize="12" Margin="0,0,0,4"/>
+                                    <ComboBox x:Name="CmbMaxTokens" Height="34" Background="#1E232E" Foreground="{StaticResource NeoTextPrimary}" BorderBrush="#374151">
+                                        <ComboBoxItem Tag="3072" Content="3072 (推荐 - 思考模型 / 多文件概括)" IsSelected="True"/>
+                                        <ComboBoxItem Tag="4096" Content="4096 (深度思考 / 大型提交)"/>
+                                        <ComboBoxItem Tag="2048" Content="2048 (中等提交)"/>
+                                        <ComboBoxItem Tag="1024" Content="1024 (常规轻量模型)"/>
+                                        <ComboBoxItem Tag="8192" Content="8192 (超长上下文)"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+
+                            <Border Background="#1A1F2C" CornerRadius="6" Padding="10,8" Margin="0,0,0,8" BorderBrush="#2D3748" BorderThickness="1">
+                                <TextBlock Text="💡 提示：深度思考/推理模型（如 GLM、DeepSeek-R1）在分析代码时会消耗大量思考 Token。若 Token 上限过小会导致正文被截断为空，建议保持 2048 及以上。" 
+                                           Foreground="{StaticResource NeoTextMuted}" FontSize="11" TextWrapping="Wrap" LineHeight="16"/>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <!-- 3. Bottom Action Bar -->
+            <Border Grid.Row="3" Style="{StaticResource NeoSunkenCard}" Padding="12,10">
+                <DockPanel LastChildFill="True">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                        <Button Content="取消" Click="BtnCancel_Click" Style="{StaticResource NeoButton}" Padding="16,6" Margin="0,0,10,0"/>
+                        <Button Content="保存配置" Click="BtnSave_Click" Style="{StaticResource NeoPrimaryButton}" Padding="18,6"/>
+                    </StackPanel>
+                    
+                    <DockPanel x:Name="AiTestPanel" VerticalAlignment="Center" Margin="0,0,12,0" Visibility="Collapsed">
+                        <Button x:Name="BtnTest" DockPanel.Dock="Left" Content="⚡ 测试连接" Click="BtnTest_Click" Style="{StaticResource NeoButton}" Padding="10,5" Margin="0,0,10,0"/>
+                        <TextBlock x:Name="TxtTestResult" Text="" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" 
+                                   ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </DockPanel>
+
+                    <TextBlock x:Name="TxtGeneralHint" Text="💡 GPU 设置切换后全进程即时生效" Foreground="{StaticResource NeoTextMuted}" FontSize="11" VerticalAlignment="Center" Visibility="Visible"/>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
