@@ -2,7 +2,9 @@
 ; 基于 Inno Setup 6
 
 #define MyAppName "OhMyGit"
+#ifndef MyAppVersion
 #define MyAppVersion "1.0.0"
+#endif
 #define MyAppPublisher "jianggujie"
 #define MyAppURL "https://github.com/jianggujie1/OhMyGittForWin"
 #define MyAppExeName "OhMyGittForWin.exe"
