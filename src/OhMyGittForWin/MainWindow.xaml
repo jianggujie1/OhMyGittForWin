@@ -8,6 +8,7 @@
         xmlns:views="clr-namespace:OhMyGittForWin.Views"
         mc:Ignorable="d"
         Title="OhMyGit - Neomorphic Edition" 
+        Icon="Assets/app.ico"
         Height="860" Width="1380"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
@@ -200,10 +201,9 @@
                     <!-- Left: App Brand & Status Pills -->
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0">
                         <!-- Brand Icon with Warm Orange Glow -->
-                        <Border Background="{StaticResource NeoOrangeGradient}" CornerRadius="8" Width="28" Height="28" 
-                                Effect="{StaticResource NeoGlowOrange}" Margin="0,0,10,0">
-                            <TextBlock Text="Ω" Foreground="White" FontWeight="Bold" FontSize="15" 
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border CornerRadius="8" Width="28" Height="28" 
+                                Effect="{StaticResource NeoGlowOrange}" Margin="0,0,10,0" ClipToBounds="True">
+                            <Image Source="Assets/icon.png" RenderOptions.BitmapScalingMode="HighQuality"/>
                         </Border>
                         
                         <TextBlock Text="OhMyGit" Foreground="{StaticResource NeoTextPrimary}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" Margin="0,0,12,0"/>
